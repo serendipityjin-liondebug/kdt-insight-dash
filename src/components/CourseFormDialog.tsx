@@ -294,7 +294,6 @@ export default function CourseFormDialog({ onCreate }: CourseFormDialogProps) {
                   <FormField
                     key={f.name}
                     control={form.control}
-                    // @ts-expect-error - dynamic name keys
                     name={f.name}
                     render={({ field }) => (
                       <FormItem>
