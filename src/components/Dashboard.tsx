@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
 import { FilterBar } from './FilterBar';
@@ -11,15 +11,87 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Users, Settings } from 'lucide-react';
 import { FilterState, KDTProgram } from '@/types/kdt';
 import { kdtPrograms, filterPrograms } from '@/data/kdtData';
+import CourseFormDialog, { NewProgramInput } from '@/components/CourseFormDialog';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function Dashboard() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [filters, setFilters] = useState<FilterState>({});
+  const [userPrograms, setUserPrograms] = useState<KDTProgram[]>(() => {
+    try {
+      const raw = localStorage.getItem('kdt_user_programs');
+      return raw ? (JSON.parse(raw) as KDTProgram[]).map(p => ({
+        ...p,
+        개강: new Date(p.개강),
+        종강: p.종강 ? new Date(p.종강) : null,
+      })) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('kdt_user_programs', JSON.stringify(userPrograms));
+  }, [userPrograms]);
+
+  const allPrograms = useMemo(() => [...kdtPrograms, ...userPrograms], [userPrograms]);
 
   // 필터된 데이터
   const filteredPrograms = useMemo(() => {
-    return filterPrograms(kdtPrograms, filters);
-  }, [filters]);
+    return filterPrograms(allPrograms, filters);
+  }, [filters, allPrograms]);
+
+
+  const handleCreateProgram = (input: NewProgramInput) => {
+    // 계산된 필드 채우기
+    const 수료율 = input.제외_수료율 !== null && input.제외_수료율 !== undefined
+      ? input.제외_수료율
+      : (input.수료 && input.정원 ? Math.round((input.수료 / input.정원) * 100 * 10) / 10 : 0);
+
+    const 모객율 = input.HRD_확정 && input.지원완료 && input.지원완료 > 0
+      ? Math.round((input.HRD_확정 / input.지원완료) * 100 * 10) / 10
+      : 0;
+
+    const 진행상태: KDTProgram['진행상태'] = (
+      input.HRD_만족도 === null || input.HRD_만족도 === undefined ||
+      ((input.취업률 ?? 0) === 0 && 수료율 < 100)
+    ) ? '진행중' : '완료';
+
+    const program: KDTProgram = {
+      과정구분: input.과정구분,
+      과정코드: input.과정코드,
+      회차: input.회차,
+      교육시간: input.교육시간,
+      개강: input.개강,
+      종강: input.종강 ?? null,
+      년도: input.년도,
+      분기: input.분기,
+      HRD_만족도: input.HRD_만족도 ?? null,
+      정원: input.정원,
+      전체_지원: input.전체_지원 ?? null,
+      지원완료: input.지원완료 ?? null,
+      HRD_전환률: input.HRD_전환률 ?? null,
+      HRD_확정: input.HRD_확정 ?? null,
+      이탈: input.이탈 ?? null,
+      수료: input.수료 ?? null,
+      근로자: input.근로자 ?? null,
+      산정_제외: input.산정_제외 ?? null,
+      제외_수료율: input.제외_수료율 ?? null,
+      취창업: input.취창업 ?? null,
+      취업률: input.취업률 ?? null,
+      제외_취업률: input.제외_취업률 ?? null,
+      최소_매출: input.최소_매출 ?? null,
+      진행상태,
+      모객율,
+      수료율,
+      분기키: `${input.년도} ${input.분기}`,
+    };
+
+    setUserPrograms(prev => [...prev, program]);
+    toast({ title: '과정 등록 완료', description: `${program.과정구분} (${program.과정코드})가 추가되었습니다.` });
+  };
 
   const renderTabContent = () => {
     const props = { programs: filteredPrograms, filters };
@@ -40,7 +112,7 @@ export default function Dashboard() {
       case 'reports':
         return <ReportsTab {...props} />;
       case 'settings':
-        return <SettingsTab />;
+        return <SettingsTab onCreateProgram={handleCreateProgram} />;
       default:
         return <OverviewTab {...props} />;
     }
@@ -77,7 +149,7 @@ export default function Dashboard() {
 
             {/* 필터 바 */}
             {!['settings', 'reports'].includes(activeTab) && (
-              <FilterBar filters={filters} onFilterChange={setFilters} />
+              <FilterBar filters={filters} onFilterChange={setFilters} programs={allPrograms} />
             )}
 
             {/* 탭 컨텐츠 */}
@@ -240,7 +312,7 @@ function ReportsTab({ programs }: { programs: KDTProgram[]; filters: FilterState
   );
 }
 
-function SettingsTab() {
+function SettingsTab({ onCreateProgram }: { onCreateProgram: (input: NewProgramInput) => void }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
@@ -311,7 +383,11 @@ function SettingsTab() {
               </div>
             </div>
             
-            <div className="pt-4 border-t border-border">
+            <div className="pt-2 border-t border-border">
+              <CourseFormDialog onCreate={onCreateProgram} />
+            </div>
+
+            <div className="pt-2">
               <Button variant="outline" className="w-full">
                 설정 초기화
               </Button>
