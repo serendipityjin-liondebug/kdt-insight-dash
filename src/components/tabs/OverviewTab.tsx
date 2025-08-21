@@ -42,7 +42,22 @@ export function OverviewTab({ programs, filters }: OverviewTabProps) {
             Math.round((completed.reduce((sum, p) => sum + p.수료율, 0) / completed.length) * 10) / 10 : 0,
         };
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => {
+        // 분기키를 년도와 분기로 파싱하여 시간순 정렬
+        const parseQuarter = (quarterKey: string) => {
+          const [year, quarter] = quarterKey.split(' ');
+          const quarterNum = parseInt(quarter.replace('Q', ''));
+          return { year: parseInt(year), quarter: quarterNum };
+        };
+        
+        const aData = parseQuarter(a.name);
+        const bData = parseQuarter(b.name);
+        
+        if (aData.year !== bData.year) {
+          return aData.year - bData.year;
+        }
+        return aData.quarter - bData.quarter;
+      });
   }, [programs]);
 
   // 전분기 대비 트렌드 계산 (단순화)

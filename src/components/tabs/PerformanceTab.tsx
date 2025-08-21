@@ -23,7 +23,22 @@ export function PerformanceTab({ programs, filters }: PerformanceTabProps) {
     }, {} as Record<string, { name: string; revenue: number; programs: number }>);
 
     return Object.values(quarterGroups)
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => {
+        // 분기키를 년도와 분기로 파싱하여 시간순 정렬
+        const parseQuarter = (quarterKey: string) => {
+          const [year, quarter] = quarterKey.split(' ');
+          const quarterNum = parseInt(quarter.replace('Q', ''));
+          return { year: parseInt(year), quarter: quarterNum };
+        };
+        
+        const aData = parseQuarter(a.name);
+        const bData = parseQuarter(b.name);
+        
+        if (aData.year !== bData.year) {
+          return aData.year - bData.year;
+        }
+        return aData.quarter - bData.quarter;
+      })
       .map(item => ({
         ...item,
         revenue: Math.round(item.revenue / 100000000), // 억원 단위로 변환
@@ -101,7 +116,22 @@ export function PerformanceTab({ programs, filters }: PerformanceTabProps) {
         completed: completed.length,
         inProgress: inProgress.length,
       };
-    }).sort((a, b) => a.quarter.localeCompare(b.quarter));
+    }).sort((a, b) => {
+      // 분기키를 년도와 분기로 파싱하여 시간순 정렬
+      const parseQuarter = (quarterKey: string) => {
+        const [year, quarter] = quarterKey.split(' ');
+        const quarterNum = parseInt(quarter.replace('Q', ''));
+        return { year: parseInt(year), quarter: quarterNum };
+      };
+      
+      const aData = parseQuarter(a.quarter);
+      const bData = parseQuarter(b.quarter);
+      
+      if (aData.year !== bData.year) {
+        return aData.year - bData.year;
+      }
+      return aData.quarter - bData.quarter;
+    });
   }, [programs]);
 
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--accent))', '#8884d8', '#82ca9d', '#ffc658'];
