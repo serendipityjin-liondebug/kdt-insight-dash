@@ -3,9 +3,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilterState, KDTProgram } from '@/types/kdt';
 import { TrendingUp, DollarSign, Target } from 'lucide-react';
-import { AnnualCalendar } from '../performance/AnnualCalendar';
-import { CourseCompletionStatus } from '../performance/CourseCompletionStatus';
-import { QuarterlyCourseTabs } from '../performance/QuarterlyCourseTabs';
 
 interface PerformanceTabProps {
   programs: KDTProgram[];
@@ -141,81 +138,63 @@ export function PerformanceTab({ programs, filters }: PerformanceTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* 상단: 성과 요약 카드들 + 연간 일정 캘린더 */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* 성과 요약 카드들 */}
-        <div className="xl:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-success/10">
-                    <TrendingUp className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-card-foreground">{performanceSummary.growthRate > 0 ? '+' : ''}{performanceSummary.growthRate}%</p>
-                    <p className="text-xs text-muted-foreground">매출 성장률</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      {/* 성과 요약 카드들 */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-success/10">
+                <TrendingUp className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-card-foreground">{performanceSummary.growthRate > 0 ? '+' : ''}{performanceSummary.growthRate}%</p>
+                <p className="text-sm text-muted-foreground">매출 성장률</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <DollarSign className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-card-foreground">{performanceSummary.initialRevenue}억</p>
-                    <p className="text-xs text-muted-foreground">초기 매출</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <DollarSign className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-card-foreground">{performanceSummary.initialRevenue}억</p>
+                <p className="text-sm text-muted-foreground">초기 매출</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-warning/10">
-                    <Target className="w-5 h-5 text-warning" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-card-foreground">{performanceSummary.currentRevenue}억</p>
-                    <p className="text-xs text-muted-foreground">현재 매출</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-warning/10">
+                <Target className="w-6 h-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-card-foreground">{performanceSummary.currentRevenue}억</p>
+                <p className="text-sm text-muted-foreground">현재 매출</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-accent/10">
-                    <DollarSign className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-card-foreground">₩{Math.round(performanceSummary.totalRevenue / 100000000)}억</p>
-                    <p className="text-xs text-muted-foreground">총 매출</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* 연간 일정 캘린더 */}
-        <div className="xl:col-span-1">
-          <AnnualCalendar programs={programs} />
-        </div>
-      </div>
-
-      {/* 중간: 교육 과정 완료 현황 + 분기별 상세 현황 */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <CourseCompletionStatus programs={programs} />
-        <div className="xl:col-span-1">
-          <QuarterlyCourseTabs programs={programs} />
-        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-accent/10">
+                <DollarSign className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-card-foreground">₩{Math.round(performanceSummary.totalRevenue / 100000000)}억</p>
+                <p className="text-sm text-muted-foreground">총 매출</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 매출 추이 차트 */}
