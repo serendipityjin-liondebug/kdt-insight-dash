@@ -18,7 +18,11 @@ interface FilterBarProps {
 export function FilterBar({ filters, onFilterChange }: FilterBarProps) {
   // 고유 값 추출
   const uniqueYears = [...new Set(kdtPrograms.map(p => p.년도))].sort((a, b) => b - a);
-  const uniqueQuarters = [...new Set(kdtPrograms.map(p => p.분기))];
+  const uniqueQuarters = [...new Set(kdtPrograms.map(p => p.분기))].sort((a, b) => {
+    // 분기 순서: 1Q, 2Q, 3Q, 4Q
+    const quarterOrder = { '1Q': 1, '2Q': 2, '3Q': 3, '4Q': 4 };
+    return quarterOrder[a as keyof typeof quarterOrder] - quarterOrder[b as keyof typeof quarterOrder];
+  });
   const uniqueCategories = [...new Set(kdtPrograms.map(p => p.과정구분))].sort();
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
