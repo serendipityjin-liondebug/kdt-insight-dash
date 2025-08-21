@@ -8,7 +8,7 @@ import { BusinessTab } from './tabs/BusinessTab';
 import { PerformanceTab } from './tabs/PerformanceTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { FilterState, KDTProgram } from '@/types/kdt';
 import { kdtPrograms, filterPrograms } from '@/data/kdtData';
 import CourseFormDialog, { NewProgramInput } from '@/components/CourseFormDialog';
@@ -107,8 +107,6 @@ export default function Dashboard() {
         return <PerformanceTab {...props} />;
       case 'courses':
         return <CoursesTab {...props} />;
-      case 'reports':
-        return <ReportsTab {...props} />;
       case 'settings':
         return <SettingsTab onCreateProgram={handleCreateProgram} />;
       default:
@@ -136,17 +134,12 @@ export default function Dashboard() {
               
               {/* 우측 액션 버튼들 */}
               <div className="flex gap-3">
-                {activeTab === 'reports' && (
-                  <Button variant="outline" className="gap-2">
-                    <FileDown className="w-4 h-4" />
-                    데이터 내보내기
-                  </Button>
-                )}
+                {/* 필요시 추가 버튼들 */}
               </div>
             </div>
 
             {/* 필터 바 */}
-            {!['settings', 'reports'].includes(activeTab) && (
+            {!['settings'].includes(activeTab) && (
               <FilterBar filters={filters} onFilterChange={setFilters} programs={allPrograms} />
             )}
 
@@ -229,39 +222,6 @@ function CoursesTab({ programs }: { programs: KDTProgram[]; filters: FilterState
 }
 
 
-function ReportsTab({ programs }: { programs: KDTProgram[]; filters: FilterState }) {
-  const handleDownload = () => {
-    // CSV 다운로드 로직 (실제로는 서버에서 처리하거나 클라이언트에서 CSV 생성)
-    alert('현재 필터 조건의 데이터를 CSV로 다운로드합니다.');
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-12 text-center">
-        <FileDown className="w-16 h-16 mx-auto mb-6 text-muted-foreground" />
-        <h3 className="text-xl font-semibold mb-4">리포트 다운로드</h3>
-        <p className="text-muted-foreground mb-8">
-          현재 설정된 필터 조건에 따른 데이터를 다양한 형식으로 다운로드할 수 있습니다.
-        </p>
-        
-        <div className="space-y-4 max-w-md mx-auto">
-          <Button onClick={handleDownload} className="w-full gap-2">
-            <FileDown className="w-4 h-4" />
-            CSV 다운로드 ({programs.length}개 과정)
-          </Button>
-          <Button variant="outline" className="w-full gap-2">
-            <FileDown className="w-4 h-4" />
-            Excel 다운로드
-          </Button>
-          <Button variant="outline" className="w-full gap-2">
-            <FileDown className="w-4 h-4" />
-            PDF 리포트 생성
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function SettingsTab({ onCreateProgram }: { onCreateProgram: (input: NewProgramInput) => void }) {
   return (
@@ -357,7 +317,6 @@ function getTabTitle(tabId: string): string {
     business: '사업운영현황',
     performance: '성과 분석',
     courses: '과정 관리',
-    reports: '리포트',
     settings: '설정',
   };
   return titles[tabId as keyof typeof titles] || '대시보드';
