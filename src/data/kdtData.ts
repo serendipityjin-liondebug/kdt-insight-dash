@@ -107,8 +107,8 @@ export const parseKDTData = (): KDTProgram[] => {
     program.분기키 = `${program.년도} ${program.분기}`;
     
     // 모객율 계산
-    program.모객율 = program.지원완료 && program.정원 
-      ? Math.round((program.지원완료 / program.정원) * 100 * 10) / 10 
+    program.모객율 = program.HRD_확정 && program.지원완료 && program.지원완료 > 0 
+      ? Math.round((program.HRD_확정 / program.지원완료) * 100 * 10) / 10 
       : 0;
 
     // 수료율 계산
