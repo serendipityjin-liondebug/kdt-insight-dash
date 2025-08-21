@@ -165,7 +165,7 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                     <Progress value={program.수료율} className="h-2" />
                   </div>
 
-                  {program.취업률 !== null && (
+                  {program.진행상태 === '완료' && program.취업률 !== null && program.취업률 >= 0 && program.취업률 <= 100 ? (
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">취업률</span>
@@ -173,7 +173,15 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                       </div>
                       <Progress value={program.취업률} className="h-2" />
                     </div>
-                  )}
+                  ) : program.진행상태 === '진행중' ? (
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-muted-foreground">취업률</span>
+                        <span className="font-medium text-muted-foreground">진행중</span>
+                      </div>
+                      <Progress value={0} className="h-2 opacity-50" />
+                    </div>
+                  ) : null}
 
                   {program.HRD_만족도 !== null && (
                     <div>
