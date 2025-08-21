@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Users, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { KDTProgram } from '@/types/kdt';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AnnualCalendarProps {
   programs: KDTProgram[];
@@ -24,7 +24,8 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
     return colorMap;
   }, [programs]);
 
-  const monthlyCalendars = useMemo(() => {
+  // 월별 요약 데이터 생성
+  const monthlySummaries = useMemo(() => {
     const months = [
       '1월', '2월', '3월', '4월', '5월', '6월',
       '7월', '8월', '9월', '10월', '11월', '12월'
@@ -32,145 +33,124 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
 
     return months.map((month, monthIndex) => {
       const monthNumber = monthIndex + 1;
-      const daysInMonth = new Date(year, monthNumber, 0).getDate();
-      const firstDayOfWeek = new Date(year, monthIndex, 1).getDay();
       
-      // 해당 월에 겹치는 프로그램들 찾기
-      const monthPrograms = programs.filter(program => {
+      // 해당 월에 시작되는 프로그램들
+      const startingPrograms = programs.filter(program => {
+        const startDate = new Date(program.개강);
+        return startDate.getFullYear() === year && startDate.getMonth() + 1 === monthNumber;
+      });
+      
+      // 해당 월에 진행 중인 프로그램들 (시작일과 상관없이)
+      const ongoingPrograms = programs.filter(program => {
         const startDate = new Date(program.개강);
         const endDate = program.종강 ? new Date(program.종강) : null;
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0);
         
-        // 프로그램이 해당 월과 겹치는지 확인
-        const programStartMonth = startDate.getMonth() + 1;
-        const programStartYear = startDate.getFullYear();
-        const programEndMonth = endDate ? endDate.getMonth() + 1 : 12;
-        const programEndYear = endDate ? endDate.getFullYear() : year;
-        
-        return (
-          (programStartYear === year && programStartMonth <= monthNumber && 
-           programEndYear === year && programEndMonth >= monthNumber) ||
-          (programStartYear === year && programStartMonth === monthNumber) ||
-          (programEndYear === year && programEndMonth === monthNumber) ||
-          (programStartYear < year && programEndYear > year) ||
-          (programStartYear < year && programEndYear === year && programEndMonth >= monthNumber) ||
-          (programStartYear === year && programStartMonth <= monthNumber && programEndYear > year)
-        );
+        return (startDate <= monthEnd && (!endDate || endDate >= monthStart));
+      });
+
+      // 해당 월에 완료되는 프로그램들
+      const completingPrograms = programs.filter(program => {
+        const endDate = program.종강 ? new Date(program.종강) : null;
+        return endDate && endDate.getFullYear() === year && endDate.getMonth() + 1 === monthNumber;
       });
 
       return {
         month,
         monthNumber,
-        daysInMonth,
-        firstDayOfWeek,
-        programs: monthPrograms
+        startingCount: startingPrograms.length,
+        ongoingCount: ongoingPrograms.length,
+        completingCount: completingPrograms.length,
+        startingPrograms,
+        ongoingPrograms,
+        completingPrograms
       };
     });
   }, [programs, year]);
 
   return (
-    <TooltipProvider>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>{year}년 연간 효율성 일정</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm font-medium">{year}</span>
-              <Button variant="outline" size="sm">
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>{year}년 연간 과정 현황</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium">{year}</span>
+            <Button variant="outline" size="sm">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4">
-            {monthlyCalendars.map((calendar) => (
-              <div key={calendar.month} className="border border-border rounded-lg p-3">
-                <h4 className="font-medium text-sm mb-2 text-center">{calendar.month}</h4>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {monthlySummaries.map((summary) => (
+            <Card key={summary.month} className="border border-border hover:border-primary/50 transition-colors cursor-pointer">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-base">{summary.month}</h4>
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                </div>
                 
-                {/* 요일 헤더 */}
-                <div className="grid grid-cols-7 gap-1 mb-1">
-                  {['일', '월', '화', '수', '목', '금', '토'].map((day) => (
-                    <div key={day} className="text-xs text-muted-foreground text-center py-1">
-                      {day}
+                {/* 과정 수 요약 */}
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">신규 시작</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {summary.startingCount}개
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">진행 중</span>
+                    <Badge variant="outline" className="text-xs">
+                      {summary.ongoingCount}개
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">완료 예정</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {summary.completingCount}개
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* 과정구분별 색상 바 */}
+                {summary.ongoingPrograms.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground mb-1">진행 과정</div>
+                    <div className="flex gap-1 mb-2">
+                      {[...new Set(summary.ongoingPrograms.map(p => p.과정구분))].map((courseType) => (
+                        <div
+                          key={courseType}
+                          className={`flex-1 h-2 rounded-sm bg-${courseColors[courseType]}`}
+                          title={courseType}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
-                
-                {/* 달력 날짜 */}
-                <div className="grid grid-cols-7 gap-1">
-                  {/* 빈 칸 (첫 주 시작 전) */}
-                  {Array.from({ length: calendar.firstDayOfWeek }, (_, i) => (
-                    <div key={`empty-${i}`} className="h-6" />
-                  ))}
-                  
-                  {/* 실제 날짜들 */}
-                  {Array.from({ length: calendar.daysInMonth }, (_, i) => {
-                    const day = i + 1;
-                    const dayPrograms = calendar.programs.filter(program => {
-                      const startDate = new Date(program.개강);
-                      const endDate = program.종강 ? new Date(program.종강) : null;
-                      const currentDate = new Date(year, calendar.monthNumber - 1, day);
-                      
-                      return currentDate >= startDate && (!endDate || currentDate <= endDate);
-                    });
-                    
-                    return (
-                      <div key={day} className="h-6 relative">
-                        <div className="text-xs text-center leading-6 relative z-10">
-                          {day}
-                        </div>
-                        
-                        {/* 프로그램 색상 표시 */}
-                        {dayPrograms.length > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="absolute inset-0 rounded-sm opacity-60 cursor-pointer">
-                                <div className="flex h-full">
-                                  {dayPrograms.slice(0, 3).map((program, index) => (
-                                    <div
-                                      key={`${program.과정코드}-${program.회차}`}
-                                      className={`flex-1 bg-${courseColors[program.과정구분]} ${
-                                        program.진행상태 === '완료' ? 'opacity-50' : ''
-                                      }`}
-                                      style={{
-                                        borderRadius: index === 0 ? '2px 0 0 2px' : 
-                                                   index === dayPrograms.length - 1 ? '0 2px 2px 0' : '0'
-                                      }}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="space-y-1">
-                                {dayPrograms.map((program) => (
-                                  <div key={`${program.과정코드}-${program.회차}`} className="text-xs">
-                                    <div className="font-medium">{program.과정구분} {program.회차}기</div>
-                                    <div className="text-muted-foreground">
-                                      {program.개강.toLocaleDateString()} ~ {program.종강?.toLocaleDateString() || '진행중'}
-                                    </div>
-                                    <div className={`text-xs ${program.진행상태 === '완료' ? 'text-success' : 'text-primary'}`}>
-                                      {program.진행상태}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* 범례 */}
-          <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="text-xs text-muted-foreground">
+                      {summary.ongoingPrograms.slice(0, 2).map(p => p.과정구분).join(', ')}
+                      {summary.ongoingPrograms.length > 2 && ` 외 ${summary.ongoingPrograms.length - 2}개`}
+                    </div>
+                  </div>
+                )}
+
+                {summary.ongoingPrograms.length === 0 && (
+                  <div className="text-xs text-muted-foreground text-center py-2">
+                    진행 중인 과정 없음
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        {/* 범례 */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="text-sm font-medium mb-2">과정 구분</div>
+          <div className="flex flex-wrap gap-3">
             {Object.entries(courseColors).map(([courseType, colorClass]) => (
               <div key={courseType} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-sm bg-${colorClass}`} />
@@ -178,8 +158,8 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
