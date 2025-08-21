@@ -8,7 +8,7 @@ import { BusinessTab } from './tabs/BusinessTab';
 import { PerformanceTab } from './tabs/PerformanceTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown, Users, Settings } from 'lucide-react';
+import { FileDown, Settings } from 'lucide-react';
 import { FilterState, KDTProgram } from '@/types/kdt';
 import { kdtPrograms, filterPrograms } from '@/data/kdtData';
 import CourseFormDialog, { NewProgramInput } from '@/components/CourseFormDialog';
@@ -107,8 +107,6 @@ export default function Dashboard() {
         return <PerformanceTab {...props} />;
       case 'courses':
         return <CoursesTab {...props} />;
-      case 'students':
-        return <StudentsTab {...props} />;
       case 'reports':
         return <ReportsTab {...props} />;
       case 'settings':
@@ -230,53 +228,6 @@ function CoursesTab({ programs }: { programs: KDTProgram[]; filters: FilterState
   );
 }
 
-function StudentsTab({ programs }: { programs: KDTProgram[]; filters: FilterState }) {
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Users className="w-6 h-6 text-primary" />
-          <h3 className="text-lg font-semibold">수강생 현황</h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-3 font-medium text-muted-foreground">과정구분</th>
-                <th className="text-center p-3 font-medium text-muted-foreground">회차</th>
-                <th className="text-center p-3 font-medium text-muted-foreground">정원</th>
-                <th className="text-center p-3 font-medium text-muted-foreground">수료</th>
-                <th className="text-center p-3 font-medium text-muted-foreground">취업</th>
-                <th className="text-center p-3 font-medium text-muted-foreground">진행상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {programs.map((program, index) => (
-                <tr key={index} className="border-b border-border">
-                  <td className="p-3">{program.과정구분}</td>
-                  <td className="p-3 text-center">{program.회차}</td>
-                  <td className="p-3 text-center">{program.정원}</td>
-                  <td className="p-3 text-center">{program.수료 || 0}</td>
-                  <td className="p-3 text-center">{program.취창업 || 0}</td>
-                  <td className="p-3 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      program.진행상태 === '진행중' 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'bg-success/10 text-success'
-                    }`}>
-                      {program.진행상태}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function ReportsTab({ programs }: { programs: KDTProgram[]; filters: FilterState }) {
   const handleDownload = () => {
@@ -406,7 +357,6 @@ function getTabTitle(tabId: string): string {
     business: '사업운영현황',
     performance: '성과 분석',
     courses: '과정 관리',
-    students: '수강생 관리',
     reports: '리포트',
     settings: '설정',
   };

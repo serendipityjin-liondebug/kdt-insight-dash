@@ -5,7 +5,6 @@ import {
   TrendingUp, 
   Award, 
   FolderOpen, 
-  Users, 
   FileText, 
   Settings 
 } from 'lucide-react';
@@ -26,7 +25,6 @@ const menuItems = [
   { id: 'business', label: '사업운영현황', icon: TrendingUp },
   { id: 'performance', label: '성과 분석', icon: Award },
   { id: 'courses', label: '과정 관리', icon: FolderOpen },
-  { id: 'students', label: '수강생 관리', icon: Users },
   { id: 'reports', label: '리포트', icon: FileText },
   { id: 'settings', label: '설정', icon: Settings },
 ];
