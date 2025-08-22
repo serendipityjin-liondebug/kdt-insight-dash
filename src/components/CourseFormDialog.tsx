@@ -46,9 +46,10 @@ export type NewProgramInput = z.infer<typeof schema>;
 
 interface CourseFormDialogProps {
   onCreate: (input: NewProgramInput) => void;
+  children?: React.ReactNode;
 }
 
-export default function CourseFormDialog({ onCreate }: CourseFormDialogProps) {
+export default function CourseFormDialog({ onCreate, children }: CourseFormDialogProps) {
   const { toast } = useToast();
   const form = useForm<NewProgramInput>({
     resolver: zodResolver(schema),
@@ -90,7 +91,7 @@ export default function CourseFormDialog({ onCreate }: CourseFormDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full">과정 등록</Button>
+        {children || <Button className="w-full">과정 등록</Button>}
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>

@@ -7,10 +7,14 @@ import { BusinessTab } from './tabs/BusinessTab';
 import { PerformanceTab } from './tabs/PerformanceTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, Eye, Edit, Trash2, Plus } from 'lucide-react';
 import { KDTProgram } from '@/types/kdt';
 import { kdtPrograms } from '@/data/kdtData';
 import CourseFormDialog, { NewProgramInput } from '@/components/CourseFormDialog';
+import { CourseViewDialog } from '@/components/CourseViewDialog';
+import { CourseEditDialog, EditProgramInput } from '@/components/CourseEditDialog';
+import { CourseDeleteDialog } from '@/components/CourseDeleteDialog';
+import { courseDataUtils } from '@/utils/courseDataUtils';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -86,6 +90,38 @@ export default function Dashboard() {
     toast({ title: '과정 등록 완료', description: `${program.과정구분} (${program.과정코드})가 추가되었습니다.` });
   };
 
+  const handleEditProgram = (programKey: string, editedData: EditProgramInput) => {
+    const originalProgram = courseDataUtils.findProgram(allPrograms, programKey);
+    if (!originalProgram) {
+      toast({ title: '오류', description: '수정할 과정을 찾을 수 없습니다.', variant: 'destructive' });
+      return;
+    }
+
+    const updatedProgram = courseDataUtils.updateProgram(originalProgram, editedData);
+    
+    // 사용자 프로그램에서 업데이트
+    const isUserProgram = courseDataUtils.findProgram(userPrograms, programKey);
+    if (isUserProgram) {
+      const updatedUserPrograms = courseDataUtils.replaceProgram(userPrograms, programKey, updatedProgram);
+      setUserPrograms(updatedUserPrograms);
+      toast({ title: '과정 수정 완료', description: `${updatedProgram.과정구분}이 수정되었습니다.` });
+    } else {
+      toast({ title: '알림', description: '기본 프로그램은 수정할 수 없습니다.', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteProgram = (programKey: string) => {
+    const programToDelete = courseDataUtils.findProgram(userPrograms, programKey);
+    if (!programToDelete) {
+      toast({ title: '오류', description: '삭제할 과정을 찾을 수 없거나 기본 프로그램입니다.', variant: 'destructive' });
+      return;
+    }
+
+    const updatedUserPrograms = courseDataUtils.removeProgram(userPrograms, programKey);
+    setUserPrograms(updatedUserPrograms);
+    toast({ title: '과정 삭제 완료', description: `${programToDelete.과정구분}이 삭제되었습니다.` });
+  };
+
   const renderTabContent = () => {
     const props = { programs: allPrograms };
     
@@ -99,9 +135,15 @@ export default function Dashboard() {
       case 'performance':
         return <PerformanceTab {...props} />;
       case 'courses':
-        return <CoursesTab {...props} />;
+        return <CoursesTab 
+          {...props} 
+          onCreateProgram={handleCreateProgram}
+          onEditProgram={handleEditProgram}
+          onDeleteProgram={handleDeleteProgram}
+          userPrograms={userPrograms}
+        />;
       case 'settings':
-        return <SettingsTab onCreateProgram={handleCreateProgram} />;
+        return <SettingsTab />;
       default:
         return <OverviewTab {...props} />;
     }
@@ -143,75 +185,142 @@ export default function Dashboard() {
 }
 
 // 간단한 탭 컴포넌트들 (추후 별도 파일로 분리 가능)
-function CoursesTab({ programs }: { programs: KDTProgram[] }) {
+function CoursesTab({ 
+  programs, 
+  onCreateProgram, 
+  onEditProgram, 
+  onDeleteProgram, 
+  userPrograms 
+}: { 
+  programs: KDTProgram[];
+  onCreateProgram: (input: NewProgramInput) => void;
+  onEditProgram: (programKey: string, input: EditProgramInput) => void;
+  onDeleteProgram: (programKey: string) => void;
+  userPrograms: KDTProgram[];
+}) {
+  const isUserProgram = (program: KDTProgram) => {
+    const programKey = courseDataUtils.createProgramKey(program);
+    return courseDataUtils.findProgram(userPrograms, programKey) !== undefined;
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      {programs.map((program) => (
-        <Card key={`${program.과정코드}_${program.회차}`} className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-semibold text-lg">{program.과정구분}</h4>
-                  <p className="text-sm text-muted-foreground">{program.과정코드}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">보기</Button>
-                  <Button variant="ghost" size="sm">편집</Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">회차:</span>
-                  <span>{program.회차}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">기간:</span>
-                  <span>{program.개강 ? new Date(program.개강).toLocaleDateString('ko-KR') : '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">정원:</span>
-                  <span>{program.정원}명</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">수료:</span>
-                  <span>{program.수료 || 0}명</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">수료율:</span>
-                  <span className="font-medium">{program.수료율}%</span>
-                </div>
-                {program.취업률 !== null && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">취업률:</span>
-                    <span className="font-medium">{program.취업률}%</span>
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-card-foreground">과정 관리</h2>
+          <p className="text-muted-foreground">KDT 프로그램을 등록하고 관리하세요</p>
+        </div>
+        <CourseFormDialog onCreate={onCreateProgram}>
+          <Button className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            과정 등록
+          </Button>
+        </CourseFormDialog>
+      </div>
+
+      {/* 과정 카드 목록 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {programs.map((program) => {
+          const canEdit = isUserProgram(program);
+          const programKey = courseDataUtils.createProgramKey(program);
+          
+          return (
+            <Card key={programKey} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-lg">{program.과정구분}</h4>
+                      <p className="text-sm text-muted-foreground">{program.과정코드}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <CourseViewDialog program={program}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </CourseViewDialog>
+                      
+                      {canEdit && (
+                        <>
+                          <CourseEditDialog 
+                            program={program} 
+                            onEdit={onEditProgram}
+                          >
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </CourseEditDialog>
+                          
+                          <CourseDeleteDialog 
+                            program={program} 
+                            onDelete={onDeleteProgram}
+                          >
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </CourseDeleteDialog>
+                        </>
+                      )}
+                    </div>
                   </div>
-                )}
-                {program.HRD_만족도 !== null && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">만족도:</span>
-                    <span className="font-medium">{program.HRD_만족도}/5.0</span>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">회차:</span>
+                      <span>{program.회차}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">기간:</span>
+                      <span>{program.개강 ? new Date(program.개강).toLocaleDateString('ko-KR') : '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">정원:</span>
+                      <span>{program.정원}명</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">수료:</span>
+                      <span>{program.수료 || 0}명</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">수료율:</span>
+                      <span className="font-medium">{program.수료율}%</span>
+                    </div>
+                    {program.취업률 !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">취업률:</span>
+                        <span className="font-medium">{program.취업률}%</span>
+                      </div>
+                    )}
+                    {program.HRD_만족도 !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">만족도:</span>
+                        <span className="font-medium">{program.HRD_만족도}/5.0</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              <div className="pt-4 border-t border-border">
-                <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                  다음 평가일: 2024-12-15
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                  
+                  <div className="pt-4 border-t border-border flex items-center justify-between">
+                    <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                      {program.진행상태}
+                    </span>
+                    {canEdit && (
+                      <span className="text-xs text-muted-foreground">편집 가능</span>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 
 
-function SettingsTab({ onCreateProgram }: { onCreateProgram: (input: NewProgramInput) => void }) {
+function SettingsTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
@@ -283,7 +392,9 @@ function SettingsTab({ onCreateProgram }: { onCreateProgram: (input: NewProgramI
             </div>
             
             <div className="pt-2 border-t border-border">
-              <CourseFormDialog onCreate={onCreateProgram} />
+              <p className="text-sm text-muted-foreground">
+                과정 등록은 '과정 관리' 탭에서 이용하실 수 있습니다.
+              </p>
             </div>
 
             <div className="pt-2">
