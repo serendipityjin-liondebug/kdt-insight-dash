@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { FilterState, KDTProgram } from '@/types/kdt';
-import { Clock, Users, Award, TrendingUp } from 'lucide-react';
+import { Clock, Users, Award, TrendingUp, Calendar } from 'lucide-react';
+import { calculateProgressRate, calculateDDay, getDDayColor, getProgressColor } from '@/utils/courseProgress';
+import { getSchoolUnitPrice } from '@/data/unitPrices';
 
 interface EducationTabProps {
   programs: KDTProgram[];
@@ -43,10 +45,30 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
         day: 'numeric'
       }) : '진행중';
 
+      // 진행률 및 D-Day 계산
+      const progressRate = program.진행상태 === '진행중' && program.개강 && program.종강 
+        ? calculateProgressRate(program.개강, program.종강)
+        : 0;
+      
+      const dDay = program.진행상태 === '진행중' && program.종강 
+        ? calculateDDay(program.종강)
+        : '';
+
+      // 인원 정보 (진행중: 확정인원, 완료: 수료인원)
+      const studentText = program.진행상태 === '진행중' 
+        ? `${program.HRD_확정 || 0}/${program.정원}` 
+        : `${program.수료 || 0}/${program.정원}`;
+
+      // 단가 정보
+      const unitPrice = getSchoolUnitPrice(program.과정코드);
+
       return {
         ...program,
         periodText: `${startDate} ~ ${endDate}`,
-        studentText: `${program.수료 || 0}/${program.정원}`,
+        studentText,
+        progressRate,
+        dDay,
+        unitPrice,
       };
     }).sort((a, b) => {
       // 진행중인 것을 먼저, 그 다음 최신순
@@ -136,7 +158,10 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                   variant={program.진행상태 === '진행중' ? 'default' : 'secondary'}
                   className={program.진행상태 === '진행중' ? 'bg-primary text-primary-foreground' : ''}
                 >
-                  {program.진행상태}
+                  {program.진행상태 === '진행중' && program.progressRate > 0 
+                    ? `${program.진행상태} (${Math.round(program.progressRate)}%)`
+                    : program.진행상태
+                  }
                 </Badge>
               </div>
             </CardHeader>
@@ -151,39 +176,69 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
-                    <span>인원: {program.studentText}</span>
+                    <span>
+                      {program.진행상태 === '진행중' ? '확정인원' : '수료인원'}: {program.studentText}
+                      {program.진행상태 === '진행중' && (
+                        <span className="ml-2 text-primary font-medium">
+                          (모집률: {Math.round(program.모객율)}%)
+                        </span>
+                      )}
+                    </span>
                   </div>
+                  {program.진행상태 === '진행중' && program.dDay && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4" />
+                      <span className={`font-medium ${getDDayColor(program.dDay)}`}>
+                        {program.dDay}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* 성과 지표 바 */}
                 <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">수료율</span>
-                      <span className="font-medium">{program.수료율}%</span>
-                    </div>
-                    <Progress value={program.수료율} className="h-2" />
-                  </div>
-
-                  {program.진행상태 === '완료' && program.취업률 !== null && program.취업률 >= 0 && program.취업률 <= 100 ? (
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-muted-foreground">취업률</span>
-                        <span className="font-medium">{program.취업률}%</span>
+                  {program.진행상태 === '진행중' ? (
+                    <>
+                      {/* 진행중 과정: 진행률 표시 */}
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">과정 진행률</span>
+                          <span className={`font-medium ${getProgressColor(program.progressRate)}`}>
+                            {Math.round(program.progressRate)}%
+                          </span>
+                        </div>
+                        <Progress 
+                          value={program.progressRate} 
+                          className="h-2"
+                        />
                       </div>
-                      <Progress value={program.취업률} className="h-2" />
-                    </div>
-                  ) : program.진행상태 === '진행중' ? (
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-muted-foreground">취업률</span>
-                        <span className="font-medium text-muted-foreground">진행중</span>
+                    </>
+                  ) : (
+                    <>
+                      {/* 완료된 과정: 수료율 표시 */}
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-muted-foreground">수료율</span>
+                          <span className="font-medium">{program.수료율}%</span>
+                        </div>
+                        <Progress value={program.수료율} className="h-2" />
                       </div>
-                      <Progress value={0} className="h-2 opacity-50" />
-                    </div>
-                  ) : null}
 
-                  {program.HRD_만족도 !== null && (
+                      {/* 완료된 과정: 취업률 표시 */}
+                      {program.취업률 !== null && program.취업률 >= 0 && program.취업률 <= 100 && (
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">취업률</span>
+                            <span className="font-medium">{program.취업률}%</span>
+                          </div>
+                          <Progress value={program.취업률} className="h-2" />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* 만족도 (완료된 과정만) */}
+                  {program.진행상태 === '완료' && program.HRD_만족도 !== null && (
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">만족도</span>
@@ -195,14 +250,20 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                 </div>
 
                 {/* 추가 정보 */}
-                {program.최소_매출 !== null && (
-                  <div className="pt-2 border-t border-border">
+                <div className="pt-2 border-t border-border space-y-1">
+                  {program.unitPrice > 0 && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">과정 단가: </span>
+                      <span className="font-medium">₩{program.unitPrice.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {program.최소_매출 !== null && (
                     <div className="text-sm">
                       <span className="text-muted-foreground">최소 매출: </span>
                       <span className="font-medium">₩{program.최소_매출.toLocaleString()}</span>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
