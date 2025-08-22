@@ -203,7 +203,7 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
   // 상태 뱃지 컴포넌트
   const StatusBadge = ({ status, progressRate }: { status: '진행중' | '완료'; progressRate?: number }) => (
     <Badge variant={status === '완료' ? 'default' : 'secondary'} className="text-xs">
-      {status === '진행중' && progressRate !== undefined ? `${status} (${progressRate}%)` : status}
+      {status}
     </Badge>
   );
 
