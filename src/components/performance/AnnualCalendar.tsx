@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { KDTProgram } from '@/types/kdt';
 
 interface AnnualCalendarProps {
@@ -100,68 +101,80 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
               </div>
             </div>
 
-            {/* 프로그램별 타임라인 */}
-            <div className="space-y-1">
-              {yearPrograms.map((program, programIndex) => (
-                <div key={`${program.과정코드}-${program.회차}`} className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 items-center hover:bg-muted/50 rounded">
-                  {/* 과정명 */}
-                  <div className="p-2 text-sm">
-                    <div className="font-medium truncate" title={`${program.과정구분} ${program.회차}회차`}>
-                      {program.과정구분} {program.회차}회차
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {program.과정코드}
-                    </div>
-                  </div>
-
-                  {/* 월별 타임라인 바 */}
-                  {months.map((month, monthIndex) => {
-                    const status = getMonthStatus(program, monthIndex);
-                    const color = courseColors[program.과정구분];
-                    
-                    return (
-                      <div key={month} className="p-1 h-12 flex items-center">
-                        {status !== 'none' && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div 
-                                className="w-full h-6 rounded transition-all duration-200 hover:opacity-80 cursor-pointer"
-                                style={{ 
-                                  backgroundColor: color,
-                                  opacity: program.진행상태 === '완료' ? 0.7 : 0.9,
-                                  borderRadius: status === 'start' ? '6px 2px 2px 6px' : 
-                                              status === 'end' ? '2px 6px 6px 2px' : '2px'
-                                }}
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="text-xs">
-                                <div className="font-medium">{program.과정구분} {program.회차}회차</div>
-                                <div>개강: {new Date(program.개강).toLocaleDateString()}</div>
-                                {program.종강 && (
-                                  <div>종강: {new Date(program.종강).toLocaleDateString()}</div>
-                                )}
-                                <div>교육시간: {program.교육시간}시간</div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+            {/* 프로그램별 타임라인 - 스크롤 가능한 영역 */}
+            <ScrollArea className="h-[320px] pr-4">
+              <div className="space-y-1">
+                {yearPrograms.map((program, programIndex) => (
+                  <div key={`${program.과정코드}-${program.회차}`} className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 items-center hover:bg-muted/50 rounded">
+                    {/* 과정명 */}
+                    <div className="p-2 text-sm">
+                      <div className="font-medium truncate" title={`${program.과정구분} ${program.회차}회차`}>
+                        {program.과정구분} {program.회차}회차
                       </div>
-                    );
-                  })}
+                      <div className="text-xs text-muted-foreground">
+                        {program.과정코드}
+                      </div>
+                    </div>
 
-                  {/* 상태 */}
-                  <div className="p-2 text-center">
-                    <Badge 
-                      variant={program.진행상태 === '완료' ? 'secondary' : 'default'}
-                      className="text-xs"
-                    >
-                      {program.진행상태}
-                    </Badge>
+                    {/* 월별 타임라인 바 */}
+                    {months.map((month, monthIndex) => {
+                      const status = getMonthStatus(program, monthIndex);
+                      const color = courseColors[program.과정구분];
+                      
+                      return (
+                        <div key={month} className="p-1 h-12 flex items-center">
+                          {status !== 'none' && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  className="w-full h-6 rounded transition-all duration-200 hover:opacity-80 cursor-pointer relative flex items-center justify-center"
+                                  style={{ 
+                                    backgroundColor: color,
+                                    opacity: program.진행상태 === '완료' ? 0.7 : 0.9,
+                                    borderRadius: status === 'start' ? '6px 2px 2px 6px' : 
+                                                status === 'end' ? '2px 6px 6px 2px' : '2px'
+                                  }}
+                                >
+                                  {/* 월별 텍스트 오버레이 */}
+                                  <span className="text-[10px] font-medium text-white drop-shadow-sm">
+                                    {month}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-xs">
+                                  <div className="font-medium">{program.과정구분} {program.회차}회차</div>
+                                  <div>개강: {new Date(program.개강).toLocaleDateString()}</div>
+                                  {program.종강 && (
+                                    <div>종강: {new Date(program.종강).toLocaleDateString()}</div>
+                                  )}
+                                  <div>교육시간: {program.교육시간}시간</div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* 상태 */}
+                    <div className="p-2 text-center">
+                      <Badge 
+                        variant={program.진행상태 === '완료' ? 'secondary' : 'default'}
+                        className="text-xs"
+                      >
+                        {program.진행상태}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+                {yearPrograms.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    해당 연도에 등록된 과정이 없습니다.
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
         </div>
         
