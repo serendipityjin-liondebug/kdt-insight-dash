@@ -2,17 +2,16 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FilterState, KDTProgram } from '@/types/kdt';
+import { KDTProgram } from '@/types/kdt';
 import { Clock, Users, Award, TrendingUp, Calendar } from 'lucide-react';
 import { calculateProgressRate, calculateDDay, getDDayColor, getProgressColor } from '@/utils/courseProgress';
 import { getSchoolUnitPrice } from '@/data/unitPrices';
 
 interface EducationTabProps {
   programs: KDTProgram[];
-  filters: FilterState;
 }
 
-export function EducationTab({ programs, filters }: EducationTabProps) {
+export function EducationTab({ programs }: EducationTabProps) {
   // 요약 KPI 계산
   const summaryKPI = useMemo(() => {
     const completed = programs.filter(p => p.진행상태 === '완료');
@@ -275,7 +274,7 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
               <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>선택된 조건에 맞는 과정이 없습니다.</p>
+              <p>등록된 과정이 없습니다.</p>
             </div>
           </CardContent>
         </Card>

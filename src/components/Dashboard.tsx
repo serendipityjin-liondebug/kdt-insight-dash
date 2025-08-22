@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
-import { FilterBar } from './FilterBar';
 import { OverviewTab } from './tabs/OverviewTab';
 import { EducationTab } from './tabs/EducationTab';
 import { BusinessTab } from './tabs/BusinessTab';
@@ -9,8 +8,8 @@ import { PerformanceTab } from './tabs/PerformanceTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import { FilterState, KDTProgram } from '@/types/kdt';
-import { kdtPrograms, filterPrograms } from '@/data/kdtData';
+import { KDTProgram } from '@/types/kdt';
+import { kdtPrograms } from '@/data/kdtData';
 import CourseFormDialog, { NewProgramInput } from '@/components/CourseFormDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,7 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 export default function Dashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
-  const [filters, setFilters] = useState<FilterState>({});
   const [userPrograms, setUserPrograms] = useState<KDTProgram[]>(() => {
     try {
       const raw = localStorage.getItem('kdt_user_programs');
@@ -37,11 +35,6 @@ export default function Dashboard() {
   }, [userPrograms]);
 
   const allPrograms = useMemo(() => [...kdtPrograms, ...userPrograms], [userPrograms]);
-
-  // 필터된 데이터
-  const filteredPrograms = useMemo(() => {
-    return filterPrograms(allPrograms, filters);
-  }, [filters, allPrograms]);
 
 
   const handleCreateProgram = (input: NewProgramInput) => {
@@ -94,7 +87,7 @@ export default function Dashboard() {
   };
 
   const renderTabContent = () => {
-    const props = { programs: filteredPrograms, filters };
+    const props = { programs: allPrograms };
     
     switch (activeTab) {
       case 'overview':
@@ -138,11 +131,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* 필터 바 */}
-            {!['settings'].includes(activeTab) && (
-              <FilterBar filters={filters} onFilterChange={setFilters} programs={allPrograms} />
-            )}
-
             {/* 탭 컨텐츠 */}
             <div className="min-h-[500px]">
               {renderTabContent()}
@@ -155,7 +143,7 @@ export default function Dashboard() {
 }
 
 // 간단한 탭 컴포넌트들 (추후 별도 파일로 분리 가능)
-function CoursesTab({ programs }: { programs: KDTProgram[]; filters: FilterState }) {
+function CoursesTab({ programs }: { programs: KDTProgram[] }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       {programs.map((program) => (

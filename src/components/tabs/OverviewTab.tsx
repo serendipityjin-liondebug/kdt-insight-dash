@@ -1,22 +1,29 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { KPICard } from '@/components/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilterState, KDTProgram } from '@/types/kdt';
-import { calculateKPI } from '@/data/kdtData';
+import { calculateKPI, filterPrograms } from '@/data/kdtData';
+import { FilterBar } from '@/components/FilterBar';
 
 interface OverviewTabProps {
   programs: KDTProgram[];
-  filters: FilterState;
 }
 
-export function OverviewTab({ programs, filters }: OverviewTabProps) {
+export function OverviewTab({ programs }: OverviewTabProps) {
+  const [filters, setFilters] = useState<FilterState>({});
+  
+  // 필터된 프로그램 데이터
+  const filteredPrograms = useMemo(() => {
+    return filterPrograms(programs, filters);
+  }, [programs, filters]);
+  
   // KPI 계산
-  const kpiData = useMemo(() => calculateKPI(programs), [programs]);
+  const kpiData = useMemo(() => calculateKPI(filteredPrograms), [filteredPrograms]);
   
   // 분기별 추이 데이터 생성
   const trendData = useMemo(() => {
-    const quarterGroups = programs.reduce((acc, program) => {
+    const quarterGroups = filteredPrograms.reduce((acc, program) => {
       const key = program.분기키;
       if (!acc[key]) {
         acc[key] = [];
@@ -58,7 +65,7 @@ export function OverviewTab({ programs, filters }: OverviewTabProps) {
         }
         return aData.quarter - bData.quarter;
       });
-  }, [programs]);
+  }, [filteredPrograms]);
 
   // 전분기 대비 트렌드 계산 (단순화)
   const getTrend = (current: number, target: number) => {
@@ -107,6 +114,9 @@ export function OverviewTab({ programs, filters }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* 필터 바 */}
+      <FilterBar filters={filters} onFilterChange={setFilters} programs={programs} />
+      
       {/* KPI 카드들 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpiCards.map((kpi, index) => (

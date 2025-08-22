@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FilterState, KDTProgram } from '@/types/kdt';
+import { KDTProgram } from '@/types/kdt';
 import { TrendingUp, Target, CheckCircle, Building } from 'lucide-react';
 
 interface BusinessTabProps {
   programs: KDTProgram[];
-  filters: FilterState;
 }
 
-export function BusinessTab({ programs, filters }: BusinessTabProps) {
+export function BusinessTab({ programs }: BusinessTabProps) {
   // 사업 운영 KPI 계산
   const businessKPI = useMemo(() => {
     const totalRevenue = programs.reduce((sum, p) => sum + (p.최소_매출 || 0), 0);
