@@ -188,7 +188,7 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                   {program.진행상태 === '진행중' && program.dDay && (
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4" />
-                      <span className={`font-medium ${getDDayColor(program.dDay)}`}>
+                      <span className="font-medium">
                         {program.dDay}
                       </span>
                     </div>
@@ -203,7 +203,7 @@ export function EducationTab({ programs, filters }: EducationTabProps) {
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-muted-foreground">과정 진행률</span>
-                          <span className={`font-medium ${getProgressColor(program.progressRate)}`}>
+                          <span className="font-medium">
                             {Math.round(program.progressRate)}%
                           </span>
                         </div>
