@@ -91,15 +91,10 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
   // 분기별 데이터 처리
   const quarterlyData = useMemo(() => {
     const quarters = ['1Q', '2Q', '3Q', '4Q'];
-    const quarterMapping: { [key: string]: string } = {
-      '1분기': '1Q', '2분기': '2Q', '3분기': '3Q', '4분기': '4Q'
-    };
 
     return quarters.map(quarter => {
-      const koreanQuarter = Object.keys(quarterMapping).find(k => quarterMapping[k] === quarter) || '';
-      
       const quarterPrograms = programs.filter(program => {
-        return program.년도 === selectedYear && program.분기 === koreanQuarter;
+        return program.년도 === selectedYear && program.분기 === quarter;
       });
 
       // 각 과정별 상세 데이터 계산
@@ -145,7 +140,7 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
       return quarterlyData[currentIndex - 1];
     } else {
       // 이전 연도의 4Q 데이터
-      const prevYearPrograms = programs.filter(p => p.년도 === selectedYear - 1 && p.분기 === '4분기');
+      const prevYearPrograms = programs.filter(p => p.년도 === selectedYear - 1 && p.분기 === '4Q');
       if (prevYearPrograms.length > 0) {
         const detailedPrograms = prevYearPrograms.map(program => {
           const unitPrice = getSchoolUnitPrice(program.과정코드);
