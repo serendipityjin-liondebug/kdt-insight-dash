@@ -124,12 +124,12 @@ export const parseKDTData = (): KDTProgram[] => {
       ? program.제외_수료율 
       : (program.수료 && program.정원 ? Math.round((program.수료 / program.정원) * 100 * 10) / 10 : 0);
 
-    // 진행상태 계산
-    program.진행상태 = (
-      program.HRD_만족도 === null || 
-      (program.취업률 === 0 && program.수료율 < 100) ||
-      values[8] === '진행중'
-    ) ? '진행중' : '완료';
+    // 진행상태 계산 - 더 정확한 로직 적용
+    const currentDate = new Date();
+    const isAfterEndDate = program.종강 && currentDate > program.종강;
+    const hasCompletionData = program.수료 !== null && typeof program.HRD_만족도 === 'number';
+    
+    program.진행상태 = (isAfterEndDate || hasCompletionData) ? '완료' : '진행중';
 
     programs.push(program as KDTProgram);
   }

@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Users, DollarSign, Target, Award } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { TrendingUp, TrendingDown, Minus, Users, DollarSign, Target, Award, Clock, Calendar } from 'lucide-react';
 import { KDTProgram } from '@/types/kdt';
 import { cn } from '@/lib/utils';
 import { getSchoolUnitPrice } from '@/data/unitPrices';
+import { calculateProgressRate, calculateDDay, getProgressColor, getDDayColor } from '@/utils/courseProgress';
 
 interface QuarterlyDashboardProps {
   programs: KDTProgram[];
@@ -21,6 +23,8 @@ interface QuarterData {
     currentRevenue: number;
     expectedRevenue: number;
     confirmedCount: number;
+    progressRate: number;
+    dday: string;
   })[];
   totalRevenue: number;
   expectedRevenue: number;
@@ -104,13 +108,23 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
         const confirmedCount = program.HRD_확정 || 0;
         const currentRevenue = unitPrice * confirmedCount;
         const expectedRevenue = unitPrice * program.정원;
+        
+        // 진행률 및 D-Day 계산
+        const progressRate = program.진행상태 === '진행중' 
+          ? calculateProgressRate(program.개강, program.종강)
+          : 100;
+        const dday = program.진행상태 === '진행중' 
+          ? calculateDDay(program.종강)
+          : '진행완료';
 
         return {
           ...program,
           unitPrice,
           confirmedCount,
           currentRevenue,
-          expectedRevenue
+          expectedRevenue,
+          progressRate,
+          dday
         };
       });
 
@@ -147,7 +161,9 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
           const confirmedCount = program.HRD_확정 || 0;
           const currentRevenue = unitPrice * confirmedCount;
           const expectedRevenue = unitPrice * program.정원;
-          return { ...program, unitPrice, confirmedCount, currentRevenue, expectedRevenue };
+          const progressRate = 100; // 완료된 과정
+          const dday = '진행완료';
+          return { ...program, unitPrice, confirmedCount, currentRevenue, expectedRevenue, progressRate, dday };
         });
         
         return {
@@ -185,10 +201,25 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
   };
 
   // 상태 뱃지 컴포넌트
-  const StatusBadge = ({ status }: { status: '진행중' | '완료' }) => (
+  const StatusBadge = ({ status, progressRate }: { status: '진행중' | '완료'; progressRate?: number }) => (
     <Badge variant={status === '완료' ? 'default' : 'secondary'} className="text-xs">
-      {status}
+      {status === '진행중' && progressRate !== undefined ? `${status} (${progressRate}%)` : status}
     </Badge>
+  );
+
+  // 진행률 프로그레스 바 컴포넌트
+  const ProgressBar = ({ progressRate }: { progressRate: number }) => (
+    <div className="flex items-center gap-2">
+      <Progress value={progressRate} className="flex-1 h-2" />
+      <span className="text-xs font-medium min-w-[40px]">{progressRate}%</span>
+    </div>
+  );
+
+  // D-Day 컴포넌트
+  const DDayDisplay = ({ dday }: { dday: string }) => (
+    <span className={cn("text-xs font-semibold", getDDayColor(dday))}>
+      {dday}
+    </span>
   );
 
   if (!currentQuarterData) {
@@ -287,9 +318,10 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
                     <TableHead className="text-center">모집인원</TableHead>
                     <TableHead className="text-center">확정인원</TableHead>
                     <TableHead className="text-center">모집률</TableHead>
+                    <TableHead className="text-center">진행률/수료율</TableHead>
+                    <TableHead className="text-center">D-Day/취업률</TableHead>
                     <TableHead className="text-right">1인 단가</TableHead>
                     <TableHead className="text-right">현재 매출</TableHead>
-                    <TableHead className="text-right">기대 매출</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -298,7 +330,10 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
                       <TableCell className="font-medium">{program.과정구분}</TableCell>
                       <TableCell className="text-center">{program.회차}기</TableCell>
                       <TableCell className="text-center">
-                        <StatusBadge status={program.진행상태} />
+                        <StatusBadge 
+                          status={program.진행상태} 
+                          progressRate={program.진행상태 === '진행중' ? program.progressRate : undefined}
+                        />
                       </TableCell>
                       <TableCell className="text-center">{program.정원.toLocaleString()}명</TableCell>
                       <TableCell className="text-center">{program.confirmedCount.toLocaleString()}명</TableCell>
@@ -311,14 +346,29 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
                           {program.모객율.toFixed(1)}%
                         </span>
                       </TableCell>
+                      <TableCell className="text-center">
+                        {program.진행상태 === '진행중' ? (
+                          <ProgressBar progressRate={program.progressRate} />
+                        ) : (
+                          <span className="text-green-600 font-medium">
+                            {program.수료율.toFixed(1)}%
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {program.진행상태 === '진행중' ? (
+                          <DDayDisplay dday={program.dday} />
+                        ) : (
+                          <span className="text-blue-600 font-medium">
+                            {program.취업률 ? `${program.취업률.toFixed(1)}%` : '-'}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-mono">
                         ₩{program.unitPrice.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-emerald-600">
                         {formatCurrency(program.currentRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-orange-600">
-                        {formatCurrency(program.expectedRevenue)}
                       </TableCell>
                     </TableRow>
                   ))}
