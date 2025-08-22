@@ -68,23 +68,12 @@
     --sidebar-border: 215 25% 88%;
     --sidebar-ring: 217 91% 60%;
 
-    /* Chart colors - Premium gradients */
+    /* Chart colors */
     --chart-1: 217 91% 60%;
-    --chart-1-light: 217 91% 70%;
     --chart-2: 142 76% 36%;
-    --chart-2-light: 142 76% 46%;
     --chart-3: 38 92% 50%;
-    --chart-3-light: 38 92% 60%;
     --chart-4: 262 83% 58%;
-    --chart-4-light: 262 83% 68%;
     --chart-5: 0 84% 60%;
-    --chart-5-light: 0 84% 70%;
-
-    /* Premium effects */
-    --premium-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --premium-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --premium-glow: 0 0 20px rgb(var(--primary) / 0.3);
-    --timeline-connector: 215 25% 88%;
     
     --radius: 16px;
   }
