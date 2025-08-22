@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Calendar, Users, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { KDTProgram } from '@/types/kdt';
 
 interface AnnualCalendarProps {
@@ -11,9 +12,15 @@ interface AnnualCalendarProps {
 }
 
 export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
-  // 과정구분별 색상 매핑
+  // 과정구분별 색상 매핑 (더 세련된 색상으로)
   const courseColors = useMemo(() => {
-    const colors = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'];
+    const colors = [
+      'hsl(var(--chart-1))', // 파랑
+      'hsl(var(--chart-2))', // 주황  
+      'hsl(var(--chart-3))', // 초록
+      'hsl(var(--chart-4))', // 보라
+      'hsl(var(--chart-5))', // 빨강
+    ];
     const courseTypes = [...new Set(programs.map(p => p.과정구분))];
     const colorMap: Record<string, string> = {};
     
@@ -24,50 +31,40 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
     return colorMap;
   }, [programs]);
 
-  // 월별 요약 데이터 생성
-  const monthlySummaries = useMemo(() => {
-    const months = [
-      '1월', '2월', '3월', '4월', '5월', '6월',
-      '7월', '8월', '9월', '10월', '11월', '12월'
-    ];
-
-    return months.map((month, monthIndex) => {
-      const monthNumber = monthIndex + 1;
-      
-      // 해당 월에 시작되는 프로그램들
-      const startingPrograms = programs.filter(program => {
-        const startDate = new Date(program.개강);
-        return startDate.getFullYear() === year && startDate.getMonth() + 1 === monthNumber;
-      });
-      
-      // 해당 월에 진행 중인 프로그램들 (시작일과 상관없이)
-      const ongoingPrograms = programs.filter(program => {
-        const startDate = new Date(program.개강);
-        const endDate = program.종강 ? new Date(program.종강) : null;
-        const monthStart = new Date(year, monthIndex, 1);
-        const monthEnd = new Date(year, monthIndex + 1, 0);
-        
-        return (startDate <= monthEnd && (!endDate || endDate >= monthStart));
-      });
-
-      // 해당 월에 완료되는 프로그램들
-      const completingPrograms = programs.filter(program => {
-        const endDate = program.종강 ? new Date(program.종강) : null;
-        return endDate && endDate.getFullYear() === year && endDate.getMonth() + 1 === monthNumber;
-      });
-
-      return {
-        month,
-        monthNumber,
-        startingCount: startingPrograms.length,
-        ongoingCount: ongoingPrograms.length,
-        completingCount: completingPrograms.length,
-        startingPrograms,
-        ongoingPrograms,
-        completingPrograms
-      };
+  // 해당 연도의 프로그램들만 필터링
+  const yearPrograms = useMemo(() => {
+    return programs.filter(program => {
+      const startDate = new Date(program.개강);
+      const endDate = program.종강 ? new Date(program.종강) : null;
+      return startDate.getFullYear() === year || (endDate && endDate.getFullYear() === year);
     });
   }, [programs, year]);
+
+  // 각 프로그램에 대해 월별 진행 상태 계산
+  const getMonthStatus = (program: KDTProgram, monthIndex: number) => {
+    const startDate = new Date(program.개강);
+    const endDate = program.종강 ? new Date(program.종강) : new Date(year, 11, 31);
+    
+    const monthStart = new Date(year, monthIndex, 1);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    
+    // 해당 월에 프로그램이 진행되는지 확인
+    if (startDate <= monthEnd && endDate >= monthStart) {
+      // 시작월인 경우
+      if (startDate.getMonth() === monthIndex && startDate.getFullYear() === year) {
+        return 'start';
+      }
+      // 종료월인 경우  
+      if (endDate.getMonth() === monthIndex && endDate.getFullYear() === year) {
+        return 'end';
+      }
+      // 중간월인 경우
+      return 'ongoing';
+    }
+    return 'none';
+  };
+
+  const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
   return (
     <Card>
@@ -86,74 +83,98 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {monthlySummaries.map((summary) => (
-            <Card key={summary.month} className="border border-border hover:border-primary/50 transition-colors cursor-pointer">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-base">{summary.month}</h4>
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+        <div className="overflow-x-auto">
+          <div className="min-w-[800px]">
+            {/* 테이블 헤더 */}
+            <div className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 mb-2">
+              <div className="font-semibold text-sm text-foreground p-2 border-b border-border">
+                과정명
+              </div>
+              {months.map((month) => (
+                <div key={month} className="font-semibold text-xs text-center text-foreground p-2 border-b border-border">
+                  {month}
                 </div>
-                
-                {/* 과정 수 요약 */}
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">신규 시작</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {summary.startingCount}개
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">진행 중</span>
-                    <Badge variant="outline" className="text-xs">
-                      {summary.ongoingCount}개
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">완료 예정</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {summary.completingCount}개
-                    </Badge>
-                  </div>
-                </div>
+              ))}
+              <div className="font-semibold text-sm text-center text-foreground p-2 border-b border-border">
+                상태
+              </div>
+            </div>
 
-                {/* 과정구분별 색상 바 */}
-                {summary.ongoingPrograms.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground mb-1">진행 과정</div>
-                    <div className="flex gap-1 mb-2">
-                      {[...new Set(summary.ongoingPrograms.map(p => p.과정구분))].map((courseType) => (
-                        <div
-                          key={courseType}
-                          className={`flex-1 h-2 rounded-sm bg-${courseColors[courseType]}`}
-                          title={courseType}
-                        />
-                      ))}
+            {/* 프로그램별 타임라인 */}
+            <div className="space-y-1">
+              {yearPrograms.map((program, programIndex) => (
+                <div key={`${program.과정코드}-${program.회차}`} className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 items-center hover:bg-muted/50 rounded">
+                  {/* 과정명 */}
+                  <div className="p-2 text-sm">
+                    <div className="font-medium truncate" title={`${program.과정구분} ${program.회차}회차`}>
+                      {program.과정구분} {program.회차}회차
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {summary.ongoingPrograms.slice(0, 2).map(p => p.과정구분).join(', ')}
-                      {summary.ongoingPrograms.length > 2 && ` 외 ${summary.ongoingPrograms.length - 2}개`}
+                      {program.과정코드}
                     </div>
                   </div>
-                )}
 
-                {summary.ongoingPrograms.length === 0 && (
-                  <div className="text-xs text-muted-foreground text-center py-2">
-                    진행 중인 과정 없음
+                  {/* 월별 타임라인 바 */}
+                  {months.map((month, monthIndex) => {
+                    const status = getMonthStatus(program, monthIndex);
+                    const color = courseColors[program.과정구분];
+                    
+                    return (
+                      <div key={month} className="p-1 h-12 flex items-center">
+                        {status !== 'none' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div 
+                                className="w-full h-6 rounded transition-all duration-200 hover:opacity-80 cursor-pointer"
+                                style={{ 
+                                  backgroundColor: color,
+                                  opacity: program.진행상태 === '완료' ? 0.7 : 0.9,
+                                  borderRadius: status === 'start' ? '6px 2px 2px 6px' : 
+                                              status === 'end' ? '2px 6px 6px 2px' : '2px'
+                                }}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs">
+                                <div className="font-medium">{program.과정구분} {program.회차}회차</div>
+                                <div>개강: {new Date(program.개강).toLocaleDateString()}</div>
+                                {program.종강 && (
+                                  <div>종강: {new Date(program.종강).toLocaleDateString()}</div>
+                                )}
+                                <div>교육시간: {program.교육시간}시간</div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* 상태 */}
+                  <div className="p-2 text-center">
+                    <Badge 
+                      variant={program.진행상태 === '완료' ? 'secondary' : 'default'}
+                      className="text-xs"
+                    >
+                      {program.진행상태}
+                    </Badge>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         
         {/* 범례 */}
         <div className="mt-6 pt-4 border-t border-border">
           <div className="text-sm font-medium mb-2">과정 구분</div>
           <div className="flex flex-wrap gap-3">
-            {Object.entries(courseColors).map(([courseType, colorClass]) => (
+            {Object.entries(courseColors).map(([courseType, color]) => (
               <div key={courseType} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-sm bg-${colorClass}`} />
+                <div 
+                  className="w-3 h-3 rounded-sm" 
+                  style={{ backgroundColor: color }}
+                />
                 <span className="text-xs text-muted-foreground">{courseType}</span>
               </div>
             ))}
