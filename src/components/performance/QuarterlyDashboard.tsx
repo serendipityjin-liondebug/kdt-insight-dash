@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, Users, DollarSign, Target, Award } from 'lucide-react';
 import { KDTProgram } from '@/types/kdt';
 import { cn } from '@/lib/utils';
+import { getSchoolUnitPrice } from '@/data/unitPrices';
 
 interface QuarterlyDashboardProps {
   programs: KDTProgram[];
@@ -103,9 +104,7 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
 
       // 각 과정별 상세 데이터 계산
       const detailedPrograms = quarterPrograms.map(program => {
-        const unitPrice = program.최소_매출 && program.정원 > 0 
-          ? Math.round(program.최소_매출 / program.정원) 
-          : 0;
+        const unitPrice = getSchoolUnitPrice(program.과정코드);
         
         const confirmedCount = program.HRD_확정 || 0;
         const currentRevenue = unitPrice * confirmedCount;
@@ -149,9 +148,7 @@ export function QuarterlyDashboard({ programs, year = 2025 }: QuarterlyDashboard
       const prevYearPrograms = programs.filter(p => p.년도 === selectedYear - 1 && p.분기 === '4분기');
       if (prevYearPrograms.length > 0) {
         const detailedPrograms = prevYearPrograms.map(program => {
-          const unitPrice = program.최소_매출 && program.정원 > 0 
-            ? Math.round(program.최소_매출 / program.정원) 
-            : 0;
+          const unitPrice = getSchoolUnitPrice(program.과정코드);
           const confirmedCount = program.HRD_확정 || 0;
           const currentRevenue = unitPrice * confirmedCount;
           const expectedRevenue = unitPrice * program.정원;
