@@ -7,8 +7,8 @@
 @layer base {
   :root {
     /* Base colors */
-    --background: 248 250 252;
-    --foreground: 226 232 240;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     /* Card system */
     --card: 0 0% 100%;
@@ -46,7 +46,7 @@
     --ring: 217 91% 60%;
 
     /* Dashboard specific */
-    --dashboard-bg: 248 250 252;
+    --dashboard-bg: 210 40% 98%;
     --sidebar-bg: 0 0% 100%;
     --kpi-gradient-start: 217 91% 60%;
     --kpi-gradient-end: 262 83% 58%;
