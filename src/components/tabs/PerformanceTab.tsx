@@ -2,7 +2,7 @@ import React from 'react';
 import { FilterState, KDTProgram } from '@/types/kdt';
 import { AnnualCalendar } from '@/components/performance/AnnualCalendar';
 import { CourseCompletionStatus } from '@/components/performance/CourseCompletionStatus';
-import { QuarterlyCourseTabs } from '@/components/performance/QuarterlyCourseTabs';
+import { QuarterlyDashboard } from '@/components/performance/QuarterlyDashboard';
 
 interface PerformanceTabProps {
   programs: KDTProgram[];
@@ -19,7 +19,7 @@ export function PerformanceTab({ programs, filters }: PerformanceTabProps) {
       <CourseCompletionStatus programs={programs} />
 
       {/* 분기별 교육 과정 현황 */}
-      <QuarterlyCourseTabs programs={programs} year={2025} />
+      <QuarterlyDashboard programs={programs} year={2025} />
     </div>
   );
 }
