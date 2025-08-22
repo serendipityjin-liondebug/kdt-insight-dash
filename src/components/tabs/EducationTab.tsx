@@ -179,7 +179,7 @@ export function EducationTab({ programs }: EducationTabProps) {
                       {program.진행상태 === '진행중' ? '확정인원' : '수료인원'}: {program.studentText}
                       {program.진행상태 === '진행중' && (
                         <span className="ml-2 text-primary font-medium">
-                          (모집률: {Math.round(program.모객율)}%)
+                          (전환률: {program.모객율.toFixed(1)}%)
                         </span>
                       )}
                     </span>
