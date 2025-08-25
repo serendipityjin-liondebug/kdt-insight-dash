@@ -61,7 +61,7 @@ export default {
 					bg: 'hsl(var(--dashboard-bg))'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-bg))',
+					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
 					primary: 'hsl(var(--sidebar-primary))',
 					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
