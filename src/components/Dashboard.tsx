@@ -150,7 +150,7 @@ export default function Dashboard() {
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-dashboard-bg">
         <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
@@ -159,7 +159,7 @@ export default function Dashboard() {
             {/* 헤더 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <SidebarTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:scale-105 h-10 w-10 shadow-sm" />
+                <SidebarTrigger className="h-8 w-8 p-0" />
                 <div>
                   <h1 className="text-3xl font-bold text-card-foreground">
                     {getTabTitle(activeTab)}
