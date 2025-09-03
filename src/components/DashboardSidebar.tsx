@@ -37,7 +37,9 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   const { open, isMobile } = useSidebar();
 
-  return <Sidebar collapsible="icon" className="bg-sidebar border-r border-sidebar-border shadow-2xl">
+  console.log('Sidebar state:', { open, isMobile }); // Debug log
+
+  return <Sidebar collapsible="icon" className="bg-sidebar border-r border-sidebar-border shadow-2xl transition-all duration-300">
       {/* Header - Branding Section */}
       <SidebarHeader className="p-6 border-b border-sidebar-border/50">
         <div className="flex items-center gap-3">
@@ -45,7 +47,7 @@ export function DashboardSidebar({
             <BarChart3 className="w-7 h-7 text-white" />
           </div>
           {(open || isMobile) && (
-            <div className="flex-1">
+            <div className="flex-1 animate-fade-in">
               <h2 className="text-xl font-bold text-sidebar-foreground tracking-tight">IT LAB</h2>
               <p className="text-sm text-sidebar-foreground/60 font-medium">Analytics Dashboard</p>
             </div>
@@ -59,13 +61,21 @@ export function DashboardSidebar({
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {menuItems.map(item => <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton onClick={() => onTabChange(item.id)} isActive={activeTab === item.id} className={`
+                  <SidebarMenuButton 
+                    onClick={() => {
+                      console.log('Menu item clicked:', item.id); // Debug log
+                      onTabChange(item.id);
+                    }} 
+                    isActive={activeTab === item.id} 
+                    className={`
                       w-full justify-start gap-4 px-4 py-4 rounded-2xl transition-all duration-300
                       relative overflow-hidden group
                       ${activeTab === item.id ? 'bg-gradient-to-r from-sidebar-primary to-purple-500 text-white shadow-lg scale-[1.02]' : 'hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground hover:scale-[1.01]'}
-                    `}>
-                    <item.icon className={`w-5 h-5 transition-all duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-105'}`} />
-                    {(open || isMobile) && <span className="font-semibold text-sm tracking-wide">{item.label}</span>}
+                    `}
+                    title={!open ? item.label : undefined} // Tooltip when collapsed
+                  >
+                    <item.icon className={`w-5 h-5 transition-all duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-105'} ${!open ? 'mx-auto' : ''}`} />
+                    {(open || isMobile) && <span className="font-semibold text-sm tracking-wide animate-fade-in">{item.label}</span>}
                     
                     {/* Active indicator */}
                     {activeTab === item.id && (open || isMobile) && <div className="absolute right-3 top-1/2 -translate-y-1/2">
