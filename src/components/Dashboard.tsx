@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
 import { OverviewTab } from './tabs/OverviewTab';
 import { EducationTab } from './tabs/EducationTab';
@@ -158,13 +158,16 @@ export default function Dashboard() {
           <div className="max-w-7xl mx-auto space-y-6">
             {/* 헤더 */}
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-card-foreground">
-                  {getTabTitle(activeTab)}
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  KDT 프로그램 운영 현황을 한눈에 확인하세요
-                </p>
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="h-8 w-8 p-0" />
+                <div>
+                  <h1 className="text-3xl font-bold text-card-foreground">
+                    {getTabTitle(activeTab)}
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    KDT 프로그램 운영 현황을 한눈에 확인하세요
+                  </p>
+                </div>
               </div>
               
               {/* 우측 액션 버튼들 */}
