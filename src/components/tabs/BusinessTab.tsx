@@ -1,20 +1,30 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { KDTProgram } from '@/types/kdt';
+import { KDTProgram, FilterState } from '@/types/kdt';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { getSchoolUnitPrice } from '@/data/unitPrices';
+import { FilterBar } from '@/components/FilterBar';
+import { filterPrograms } from '@/data/kdtData';
 
 interface BusinessTabProps {
   programs: KDTProgram[];
 }
 
 export function BusinessTab({ programs }: BusinessTabProps) {
+  // 필터 상태 관리
+  const [filters, setFilters] = useState<FilterState>({});
+
+  // 필터링된 프로그램 데이터
+  const filteredPrograms = useMemo(() => {
+    return filterPrograms(programs, filters);
+  }, [programs, filters]);
+
   // 매출 관련 KPI 계산
   const revenueKPI = useMemo(() => {
     // 2025년 프로그램 필터링
-    const programs2025 = programs.filter(p => p.년도 === 2025);
+    const programs2025 = filteredPrograms.filter(p => p.년도 === 2025);
     
     // 예상 매출 계산: 수료율 * 정원 * 교육시간 * 18150
     const expectedRevenue = programs2025.reduce((sum, p) => {
@@ -40,14 +50,15 @@ export function BusinessTab({ programs }: BusinessTabProps) {
       totalPrograms: programs2025.length,
       completedPrograms: programs2025.filter(p => p.진행상태 === '완료').length
     };
-  }, [programs]);
+  }, [filteredPrograms]);
 
   // 월별 매출 데이터
   const monthlyRevenueData = useMemo(() => {
-    const programs2025 = programs.filter(p => p.년도 === 2025);
+    const targetYear = filters.년도 || 2025;
+    const programsFiltered = filteredPrograms.filter(p => p.년도 === targetYear);
     const monthlyData: { [key: string]: { expected: number; actual: number } } = {};
     
-    programs2025.forEach(program => {
+    programsFiltered.forEach(program => {
       const month = program.개강.getMonth() + 1;
       const monthKey = `${month}월`;
       
@@ -77,14 +88,15 @@ export function BusinessTab({ programs }: BusinessTabProps) {
           : 0
       };
     });
-  }, [programs]);
+  }, [filteredPrograms, filters.년도]);
 
   // 과정별 매출 현황
   const courseRevenueData = useMemo(() => {
-    const programs2025 = programs.filter(p => p.년도 === 2025);
+    const targetYear = filters.년도 || 2025;
+    const programsFiltered = filteredPrograms.filter(p => p.년도 === targetYear);
     const courseData: { [key: string]: { expected: number; actual: number; count: number } } = {};
     
-    programs2025.forEach(program => {
+    programsFiltered.forEach(program => {
       const course = program.과정구분;
       if (!courseData[course]) {
         courseData[course] = { expected: 0, actual: 0, count: 0 };
@@ -107,10 +119,17 @@ export function BusinessTab({ programs }: BusinessTabProps) {
       }))
       .sort((a, b) => b.actual - a.actual)
       .slice(0, 8); // 상위 8개 과정
-  }, [programs]);
+  }, [filteredPrograms, filters.년도]);
 
   return (
     <div className="space-y-6">
+      {/* 필터 바 */}
+      <FilterBar 
+        filters={filters} 
+        onFilterChange={setFilters} 
+        programs={programs}
+      />
+      
       {/* 메인 매출 지표 카드들 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
@@ -172,7 +191,7 @@ export function BusinessTab({ programs }: BusinessTabProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              월별 매출 현황 (2025년)
+              월별 매출 현황 ({filters.년도 || 2025}년)
             </CardTitle>
           </CardHeader>
           <CardContent>

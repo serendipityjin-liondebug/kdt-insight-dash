@@ -142,6 +142,7 @@ export const filterPrograms = (programs: KDTProgram[], filters: FilterState): KD
   return programs.filter(program => {
     if (filters.년도 && program.년도 !== filters.년도) return false;
     if (filters.분기 && program.분기 !== filters.분기) return false;
+    if (filters.월 && (program.개강.getMonth() + 1) !== filters.월) return false;
     if (filters.과정구분 && program.과정구분 !== filters.과정구분) return false;
     if (filters.진행상태 && filters.진행상태 !== '전체' && program.진행상태 !== filters.진행상태) return false;
     return true;

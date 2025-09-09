@@ -52,6 +52,7 @@ export interface ChartData {
 export interface FilterState {
   년도?: number;
   분기?: string;
+  월?: number;
   과정구분?: string;
   진행상태?: '진행중' | '완료' | '전체';
 }

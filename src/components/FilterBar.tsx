@@ -25,6 +25,7 @@ export function FilterBar({ filters, onFilterChange, programs }: FilterBarProps)
     const quarterOrder = { '1Q': 1, '2Q': 2, '3Q': 3, '4Q': 4 } as const;
     return quarterOrder[a as keyof typeof quarterOrder] - quarterOrder[b as keyof typeof quarterOrder];
   });
+  const uniqueMonths = [...new Set(baseData.map(p => p.개강.getMonth() + 1))].sort((a, b) => a - b);
   const uniqueCategories = [...new Set(baseData.map(p => p.과정구분))].sort();
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
@@ -33,7 +34,7 @@ export function FilterBar({ filters, onFilterChange, programs }: FilterBarProps)
     if (value === 'all') {
       delete newFilters[key];
     } else {
-      if (key === '년도') {
+      if (key === '년도' || key === '월') {
         newFilters[key] = parseInt(value);
       } else {
         newFilters[key] = value as any;
@@ -84,6 +85,28 @@ export function FilterBar({ filters, onFilterChange, programs }: FilterBarProps)
               {uniqueQuarters.map(quarter => (
                 <SelectItem key={quarter} value={quarter}>
                   {quarter}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-card-foreground whitespace-nowrap">
+            월:
+          </label>
+          <Select
+            value={filters.월?.toString() || 'all'}
+            onValueChange={(value) => handleFilterChange('월', value)}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="전체" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체</SelectItem>
+              {uniqueMonths.map(month => (
+                <SelectItem key={month} value={month.toString()}>
+                  {month}월
                 </SelectItem>
               ))}
             </SelectContent>
