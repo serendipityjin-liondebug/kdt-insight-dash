@@ -253,64 +253,235 @@ export function BusinessTab({ programs }: BusinessTabProps) {
         </Card>
       </div>
 
-      {/* 월별 차이 분석 카드 */}
-      <Card>
-        <CardHeader>
+      {/* 월별 차이 분석 - 고급 디자인 */}
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
             월별 예측 vs 실매출 차이 분석
+            <div className="ml-auto text-sm text-muted-foreground">
+              {filters.년도 || 2025}년
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {monthlyRevenueData.slice(0, 6).map((data, index) => (
-              <Card key={index} className="bg-muted/30">
-                <CardContent className="p-4">
-                  <div className="text-center space-y-2">
-                    <h4 className="font-semibold text-sm">{data.month}</h4>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">
-                        예상: {data.expected}백만원
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        실제: {data.actual}백만원
-                      </p>
-                    </div>
-                    <div className={`text-sm font-bold ${
-                      data.difference >= 0 ? 'text-success' : 'text-destructive'
-                    }`}>
-                      {data.difference > 0 ? '+' : ''}{data.difference}%
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        <CardContent className="p-6">
+          {/* 상반기 (1-6월) */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 text-primary">상반기 (1-6월)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {monthlyRevenueData.slice(0, 6).map((data, index) => {
+                const performanceLevel = data.difference >= 20 ? 'excellent' : 
+                                       data.difference >= 5 ? 'good' : 
+                                       data.difference >= -5 ? 'neutral' : 'poor';
+                
+                const gradientClass = {
+                  excellent: 'bg-gradient-to-br from-success/20 to-success/5',
+                  good: 'bg-gradient-to-br from-primary/20 to-primary/5',
+                  neutral: 'bg-gradient-to-br from-muted/40 to-muted/10',
+                  poor: 'bg-gradient-to-br from-destructive/20 to-destructive/5'
+                }[performanceLevel];
+
+                const iconClass = {
+                  excellent: 'text-success bg-success/10',
+                  good: 'text-primary bg-primary/10',
+                  neutral: 'text-muted-foreground bg-muted/20',
+                  poor: 'text-destructive bg-destructive/10'
+                }[performanceLevel];
+
+                const progressValue = Math.min(Math.abs(data.difference), 100);
+                
+                return (
+                  <Card key={index} className={`${gradientClass} border-2 hover:shadow-lg transition-all duration-300 hover:scale-105`}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        {/* 월 헤더 */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconClass}`}>
+                              <span className="text-xs font-bold">{index + 1}</span>
+                            </div>
+                            <h4 className="font-bold text-sm">{data.month}</h4>
+                          </div>
+                          <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            data.difference >= 0 ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
+                          }`}>
+                            {data.difference >= 0 ? '목표달성' : '목표미달'}
+                          </div>
+                        </div>
+
+                        {/* 매출 데이터 */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">예상매출</span>
+                            <span className="font-medium">{data.expected}백만원</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">실제매출</span>
+                            <span className="font-medium text-primary">{data.actual}백만원</span>
+                          </div>
+                        </div>
+
+                        {/* 진행률 바 */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span>달성률</span>
+                            <span className="font-bold">{data.expected > 0 ? Math.round((data.actual / data.expected) * 100) : 0}%</span>
+                          </div>
+                          <Progress 
+                            value={data.expected > 0 ? Math.min((data.actual / data.expected) * 100, 100) : 0} 
+                            className="h-2" 
+                          />
+                        </div>
+
+                        {/* 차이 표시 */}
+                        <div className="text-center">
+                          <div className={`text-lg font-bold flex items-center justify-center gap-1 ${
+                            data.difference >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {data.difference >= 0 ? (
+                              <TrendingUp className="w-4 h-4" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4" />
+                            )}
+                            {data.difference > 0 ? '+' : ''}{data.difference}%
+                          </div>
+                          <p className="text-xs text-muted-foreground">예상 대비</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
           
-          {/* 하반기 데이터 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-            {monthlyRevenueData.slice(6, 12).map((data, index) => (
-              <Card key={index + 6} className="bg-muted/30">
-                <CardContent className="p-4">
-                  <div className="text-center space-y-2">
-                    <h4 className="font-semibold text-sm">{data.month}</h4>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">
-                        예상: {data.expected}백만원
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        실제: {data.actual}백만원
-                      </p>
-                    </div>
-                    <div className={`text-sm font-bold ${
-                      data.difference >= 0 ? 'text-success' : 'text-destructive'
-                    }`}>
-                      {data.difference > 0 ? '+' : ''}{data.difference}%
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* 하반기 (7-12월) */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-primary">하반기 (7-12월)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {monthlyRevenueData.slice(6, 12).map((data, index) => {
+                const performanceLevel = data.difference >= 20 ? 'excellent' : 
+                                       data.difference >= 5 ? 'good' : 
+                                       data.difference >= -5 ? 'neutral' : 'poor';
+                
+                const gradientClass = {
+                  excellent: 'bg-gradient-to-br from-success/20 to-success/5',
+                  good: 'bg-gradient-to-br from-primary/20 to-primary/5',
+                  neutral: 'bg-gradient-to-br from-muted/40 to-muted/10',
+                  poor: 'bg-gradient-to-br from-destructive/20 to-destructive/5'
+                }[performanceLevel];
+
+                const iconClass = {
+                  excellent: 'text-success bg-success/10',
+                  good: 'text-primary bg-primary/10',
+                  neutral: 'text-muted-foreground bg-muted/20',
+                  poor: 'text-destructive bg-destructive/10'
+                }[performanceLevel];
+                
+                return (
+                  <Card key={index + 6} className={`${gradientClass} border-2 hover:shadow-lg transition-all duration-300 hover:scale-105`}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        {/* 월 헤더 */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconClass}`}>
+                              <span className="text-xs font-bold">{index + 7}</span>
+                            </div>
+                            <h4 className="font-bold text-sm">{data.month}</h4>
+                          </div>
+                          <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            data.difference >= 0 ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
+                          }`}>
+                            {data.difference >= 0 ? '목표달성' : '목표미달'}
+                          </div>
+                        </div>
+
+                        {/* 매출 데이터 */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">예상매출</span>
+                            <span className="font-medium">{data.expected}백만원</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">실제매출</span>
+                            <span className="font-medium text-primary">{data.actual}백만원</span>
+                          </div>
+                        </div>
+
+                        {/* 진행률 바 */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span>달성률</span>
+                            <span className="font-bold">{data.expected > 0 ? Math.round((data.actual / data.expected) * 100) : 0}%</span>
+                          </div>
+                          <Progress 
+                            value={data.expected > 0 ? Math.min((data.actual / data.expected) * 100, 100) : 0} 
+                            className="h-2" 
+                          />
+                        </div>
+
+                        {/* 차이 표시 */}
+                        <div className="text-center">
+                          <div className={`text-lg font-bold flex items-center justify-center gap-1 ${
+                            data.difference >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {data.difference >= 0 ? (
+                              <TrendingUp className="w-4 h-4" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4" />
+                            )}
+                            {data.difference > 0 ? '+' : ''}{data.difference}%
+                          </div>
+                          <p className="text-xs text-muted-foreground">예상 대비</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 월별 성과 요약 히트맵 */}
+          <div className="mt-8 p-4 bg-gradient-to-r from-muted/20 to-muted/10 rounded-lg">
+            <h4 className="font-semibold mb-4 text-center">연간 성과 히트맵</h4>
+            <div className="grid grid-cols-12 gap-1">
+              {monthlyRevenueData.map((data, index) => (
+                <div
+                  key={index}
+                  className={`aspect-square rounded text-xs flex items-center justify-center font-bold transition-all hover:scale-110 ${
+                    data.difference >= 20 ? 'bg-success text-white' :
+                    data.difference >= 5 ? 'bg-primary text-white' :
+                    data.difference >= -5 ? 'bg-muted text-foreground' :
+                    'bg-destructive text-white'
+                  }`}
+                  title={`${data.month}: ${data.difference > 0 ? '+' : ''}${data.difference}%`}
+                >
+                  {index + 1}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center items-center gap-4 mt-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-destructive"></div>
+                <span>-5% 미만</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-muted"></div>
+                <span>-5% ~ +5%</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-primary"></div>
+                <span>+5% ~ +20%</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-success"></div>
+                <span>+20% 이상</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
