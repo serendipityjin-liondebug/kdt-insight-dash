@@ -13,27 +13,20 @@ interface AnnualCalendarProps {
 }
 
 export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
-  // 과정구분별 색상 매핑 - 더 다양하고 시각적으로 구분되는 색상
+  // 과정구분별 색상 매핑 (더 세련된 색상으로)
   const courseColors = useMemo(() => {
-    const colorPalette = [
-      '#3B82F6', // 파랑 (AI)
-      '#F59E0B', // 주황 (클라우드)  
-      '#10B981', // 초록 (데이터 테크)
-      '#8B5CF6', // 보라 (프론트)
-      '#EF4444', // 빨강 (디자인)
-      '#6366F1', // 인디고 (자바)
-      '#EC4899', // 핑크 (파이썬)
-      '#14B8A6', // 틸 (그로스마케팅)
-      '#F97316', // 오렌지 (블록체인)
-      '#84CC16', // 라임 (iOS)
-      '#A855F7', // 보라 (프론트)
+    const colors = [
+      'hsl(var(--chart-1))', // 파랑
+      'hsl(var(--chart-2))', // 주황  
+      'hsl(var(--chart-3))', // 초록
+      'hsl(var(--chart-4))', // 보라
+      'hsl(var(--chart-5))', // 빨강
     ];
-    
-    const courseTypes = [...new Set(programs.map(p => p.과정구분))].sort();
+    const courseTypes = [...new Set(programs.map(p => p.과정구분))];
     const colorMap: Record<string, string> = {};
     
     courseTypes.forEach((type, index) => {
-      colorMap[type] = colorPalette[index % colorPalette.length];
+      colorMap[type] = colors[index % colors.length];
     });
     
     return colorMap;
@@ -48,22 +41,28 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
     });
   }, [programs, year]);
 
-  // 각 프로그램의 활성 월 계산
-  const getActiveMonths = (program: KDTProgram) => {
+  // 각 프로그램에 대해 월별 진행 상태 계산
+  const getMonthStatus = (program: KDTProgram, monthIndex: number) => {
     const startDate = new Date(program.개강);
     const endDate = program.종강 ? new Date(program.종강) : new Date(year, 11, 31);
-    const activeMonths: number[] = [];
     
-    for (let month = 0; month < 12; month++) {
-      const monthStart = new Date(year, month, 1);
-      const monthEnd = new Date(year, month + 1, 0);
-      
-      if (startDate <= monthEnd && endDate >= monthStart) {
-        activeMonths.push(month);
+    const monthStart = new Date(year, monthIndex, 1);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    
+    // 해당 월에 프로그램이 진행되는지 확인
+    if (startDate <= monthEnd && endDate >= monthStart) {
+      // 시작월인 경우
+      if (startDate.getMonth() === monthIndex && startDate.getFullYear() === year) {
+        return 'start';
       }
+      // 종료월인 경우  
+      if (endDate.getMonth() === monthIndex && endDate.getFullYear() === year) {
+        return 'end';
+      }
+      // 중간월인 경우
+      return 'ongoing';
     }
-    
-    return activeMonths;
+    return 'none';
   };
 
   const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -86,68 +85,59 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="min-w-[1000px] bg-background">
+          <div className="min-w-[800px]">
             {/* 테이블 헤더 */}
-            <div className="grid grid-cols-[280px_repeat(12,1fr)_80px] gap-px mb-4">
-              <div className="font-semibold text-sm text-foreground p-3 bg-muted/30 rounded-tl-lg">
+            <div className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 mb-2">
+              <div className="font-semibold text-sm text-foreground p-2 border-b border-border">
                 과정명
               </div>
-              {months.map((month, index) => (
-                <div key={month} className="font-semibold text-xs text-center text-foreground p-3 bg-muted/30">
+              {months.map((month) => (
+                <div key={month} className="font-semibold text-xs text-center text-foreground p-2 border-b border-border">
                   {month}
                 </div>
               ))}
-              <div className="font-semibold text-xs text-center text-foreground p-3 bg-muted/30 rounded-tr-lg">
+              <div className="font-semibold text-sm text-center text-foreground p-2 border-b border-border">
                 상태
               </div>
             </div>
 
-            {/* 프로그램별 간트차트 */}
-            <div className="space-y-px bg-muted/20 p-px rounded-lg">
-              {yearPrograms.map((program, programIndex) => {
-                const activeMonths = getActiveMonths(program);
-                const color = courseColors[program.과정구분];
-                
-                return (
-                  <div key={`${program.과정코드}-${program.회차}`} 
-                       className="grid grid-cols-[280px_repeat(12,1fr)_80px] gap-px bg-background hover:bg-muted/30 transition-colors duration-200">
-                    
+            {/* 프로그램별 타임라인 - 스크롤 가능한 영역 */}
+            <ScrollArea className="h-[320px] pr-4">
+              <div className="space-y-1">
+                {yearPrograms.map((program, programIndex) => (
+                  <div key={`${program.과정코드}-${program.회차}`} className="grid grid-cols-[300px_repeat(12,1fr)_120px] gap-1 items-center hover:bg-muted/50 rounded">
                     {/* 과정명 */}
-                    <div className="p-3 flex items-center bg-background">
-                      <div className="flex items-center gap-3 w-full">
-                        <div 
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm truncate" title={`${program.과정구분} ${program.회차}회차`}>
-                            {program.과정구분} {program.회차}회차
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {program.과정코드}
-                          </div>
-                        </div>
+                    <div className="p-2 text-sm">
+                      <div className="font-medium truncate" title={`${program.과정구분} ${program.회차}회차`}>
+                        {program.과정구분} {program.회차}회차
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {program.과정코드}
                       </div>
                     </div>
 
-                    {/* 월별 타임라인 */}
+                    {/* 월별 타임라인 바 */}
                     {months.map((month, monthIndex) => {
-                      const isActive = activeMonths.includes(monthIndex);
+                      const status = getMonthStatus(program, monthIndex);
+                      const color = courseColors[program.과정구분];
                       
                       return (
-                        <div key={month} className="p-2 h-16 flex items-center justify-center bg-background">
-                          {isActive ? (
+                        <div key={month} className="p-1 h-12 flex items-center">
+                          {status !== 'none' && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div 
-                                  className="w-8 h-6 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer shadow-sm"
+                                  className="w-full h-6 rounded transition-all duration-200 hover:opacity-80 cursor-pointer relative flex items-center justify-center"
                                   style={{ 
                                     backgroundColor: color,
-                                    opacity: program.진행상태 === '완료' ? 0.8 : 1
+                                    opacity: program.진행상태 === '완료' ? 0.7 : 0.9,
+                                    borderRadius: status === 'start' ? '6px 2px 2px 6px' : 
+                                                status === 'end' ? '2px 6px 6px 2px' : '2px'
                                   }}
                                 >
-                                  <span className="text-[9px] font-bold text-white">
-                                    {monthIndex + 1}
+                                  {/* 월별 텍스트 오버레이 */}
+                                  <span className="text-[10px] font-medium text-white drop-shadow-sm">
+                                    {month}
                                   </span>
                                 </div>
                               </TooltipTrigger>
@@ -159,80 +149,48 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
                                     <div>종강: {new Date(program.종강).toLocaleDateString()}</div>
                                   )}
                                   <div>교육시간: {program.교육시간}시간</div>
-                                  <div>정원: {program.정원}명</div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
-                          ) : (
-                            <div className="w-8 h-6" />
                           )}
                         </div>
                       );
                     })}
 
                     {/* 상태 */}
-                    <div className="p-3 flex items-center justify-center bg-background">
-                      <Button 
-                        size="sm" 
+                    <div className="p-2 text-center">
+                      <Badge 
                         variant={program.진행상태 === '완료' ? 'secondary' : 'default'}
-                        className="h-6 px-2 text-xs rounded-full"
-                        disabled
+                        className="text-xs"
                       >
                         {program.진행상태}
-                      </Button>
+                      </Badge>
                     </div>
                   </div>
-                );
-              })}
-              
-              {yearPrograms.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground bg-background rounded-lg">
-                  해당 연도에 등록된 과정이 없습니다.
-                </div>
-              )}
-            </div>
+                ))}
+                {yearPrograms.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    해당 연도에 등록된 과정이 없습니다.
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
           </div>
         </div>
         
-        {/* 범례 - 더 시각적이고 컬러풀한 디자인 */}
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="text-sm font-medium mb-4 text-foreground">과정 구분</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {/* 범례 */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="text-sm font-medium mb-2">과정 구분</div>
+          <div className="flex flex-wrap gap-3">
             {Object.entries(courseColors).map(([courseType, color]) => (
-              <div key={courseType} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <div key={courseType} className="flex items-center gap-2">
                 <div 
-                  className="w-4 h-4 rounded-full shadow-sm border-2 border-background" 
+                  className="w-3 h-3 rounded-sm" 
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-xs font-medium text-foreground truncate">{courseType}</span>
+                <span className="text-xs text-muted-foreground">{courseType}</span>
               </div>
             ))}
-          </div>
-          
-          {/* 통계 요약 */}
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center p-3 bg-muted/20 rounded-lg">
-              <div className="text-lg font-bold text-foreground">{yearPrograms.length}</div>
-              <div className="text-xs text-muted-foreground">총 과정</div>
-            </div>
-            <div className="text-center p-3 bg-muted/20 rounded-lg">
-              <div className="text-lg font-bold text-foreground">
-                {yearPrograms.filter(p => p.진행상태 === '진행중').length}
-              </div>
-              <div className="text-xs text-muted-foreground">진행중</div>
-            </div>
-            <div className="text-center p-3 bg-muted/20 rounded-lg">
-              <div className="text-lg font-bold text-foreground">
-                {yearPrograms.filter(p => p.진행상태 === '완료').length}
-              </div>
-              <div className="text-xs text-muted-foreground">완료</div>
-            </div>
-            <div className="text-center p-3 bg-muted/20 rounded-lg">
-              <div className="text-lg font-bold text-foreground">
-                {Math.round(yearPrograms.reduce((sum, p) => sum + p.수료율, 0) / yearPrograms.length || 0)}%
-              </div>
-              <div className="text-xs text-muted-foreground">평균 수료율</div>
-            </div>
           </div>
         </div>
       </CardContent>
