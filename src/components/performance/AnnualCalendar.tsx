@@ -193,6 +193,196 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
             ))}
           </div>
         </div>
+
+        {/* 히트맵 시각화 */}
+        <div className="mt-8 pt-6 border-t border-border">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">과정 활동 히트맵</h3>
+              <p className="text-sm text-muted-foreground">월별 과정 집중도 및 활동량 시각화</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 월별 과정 수량 히트맵 */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">월별 진행 과정 수</h4>
+              <div className="grid grid-cols-12 gap-1">
+                {months.map((month, monthIndex) => {
+                  const activeCourses = yearPrograms.filter(program => 
+                    getMonthStatus(program, monthIndex) !== 'none'
+                  ).length;
+                  
+                  const maxCourses = Math.max(...months.map((_, idx) =>
+                    yearPrograms.filter(p => getMonthStatus(p, idx) !== 'none').length
+                  ));
+                  
+                  const intensity = maxCourses > 0 ? activeCourses / maxCourses : 0;
+                  const opacityLevel = intensity === 0 ? 0.1 : 0.2 + (intensity * 0.8);
+                  
+                  return (
+                    <Tooltip key={month}>
+                      <TooltipTrigger asChild>
+                        <div className="aspect-square">
+                          <div 
+                            className="w-full h-full rounded border border-border/50 flex items-center justify-center text-xs font-medium transition-all duration-200 hover:scale-105 cursor-pointer"
+                            style={{ 
+                              backgroundColor: `hsl(var(--primary))`,
+                              opacity: opacityLevel,
+                              color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
+                            }}
+                          >
+                            {activeCourses}
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-xs">
+                          <div className="font-medium">{month}</div>
+                          <div>진행 과정: {activeCourses}개</div>
+                          <div>활동도: {(intensity * 100).toFixed(1)}%</div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>적음</span>
+                <div className="flex items-center gap-1">
+                  {[0.1, 0.3, 0.5, 0.7, 0.9].map((opacity, idx) => (
+                    <div 
+                      key={idx}
+                      className="w-3 h-3 rounded-sm border border-border/50"
+                      style={{ 
+                        backgroundColor: `hsl(var(--primary))`,
+                        opacity: 0.2 + (opacity * 0.8)
+                      }}
+                    />
+                  ))}
+                </div>
+                <span>많음</span>
+              </div>
+            </div>
+
+            {/* 월별 교육시간 히트맵 */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">월별 총 교육시간</h4>
+              <div className="grid grid-cols-12 gap-1">
+                {months.map((month, monthIndex) => {
+                  const totalHours = yearPrograms
+                    .filter(program => getMonthStatus(program, monthIndex) !== 'none')
+                    .reduce((sum, program) => sum + (program.교육시간 || 0), 0);
+                  
+                  const maxHours = Math.max(...months.map((_, idx) =>
+                    yearPrograms
+                      .filter(p => getMonthStatus(p, idx) !== 'none')
+                      .reduce((sum, p) => sum + (p.교육시간 || 0), 0)
+                  ));
+                  
+                  const intensity = maxHours > 0 ? totalHours / maxHours : 0;
+                  const opacityLevel = intensity === 0 ? 0.1 : 0.2 + (intensity * 0.8);
+                  
+                  return (
+                    <Tooltip key={month}>
+                      <TooltipTrigger asChild>
+                        <div className="aspect-square">
+                          <div 
+                            className="w-full h-full rounded border border-border/50 flex items-center justify-center text-[10px] font-medium transition-all duration-200 hover:scale-105 cursor-pointer"
+                            style={{ 
+                              backgroundColor: `hsl(var(--chart-2))`,
+                              opacity: opacityLevel,
+                              color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
+                            }}
+                          >
+                            {totalHours > 0 ? `${totalHours}h` : '0'}
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-xs">
+                          <div className="font-medium">{month}</div>
+                          <div>총 교육시간: {totalHours}시간</div>
+                          <div>집중도: {(intensity * 100).toFixed(1)}%</div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>적음</span>
+                <div className="flex items-center gap-1">
+                  {[0.1, 0.3, 0.5, 0.7, 0.9].map((opacity, idx) => (
+                    <div 
+                      key={idx}
+                      className="w-3 h-3 rounded-sm border border-border/50"
+                      style={{ 
+                        backgroundColor: `hsl(var(--chart-2))`,
+                        opacity: 0.2 + (opacity * 0.8)
+                      }}
+                    />
+                  ))}
+                </div>
+                <span>많음</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 과정별 월별 히트맵 */}
+          <div className="mt-6 space-y-3">
+            <h4 className="text-sm font-medium">과정별 월별 활동 현황</h4>
+            <div className="space-y-2">
+              {Object.entries(courseColors).map(([courseType, color]) => {
+                const courseTypePrograms = yearPrograms.filter(p => p.과정구분 === courseType);
+                
+                return (
+                  <div key={courseType} className="flex items-center gap-3">
+                    <div className="w-24 text-xs font-medium text-right flex-shrink-0">
+                      {courseType}
+                    </div>
+                    <div className="flex gap-1 flex-1">
+                      {months.map((month, monthIndex) => {
+                        const activeCount = courseTypePrograms.filter(program => 
+                          getMonthStatus(program, monthIndex) !== 'none'
+                        ).length;
+                        
+                        const maxForType = Math.max(...months.map((_, idx) =>
+                          courseTypePrograms.filter(p => getMonthStatus(p, idx) !== 'none').length
+                        ));
+                        
+                        const intensity = maxForType > 0 ? activeCount / maxForType : 0;
+                        
+                        return (
+                          <Tooltip key={month}>
+                            <TooltipTrigger asChild>
+                              <div 
+                                className="w-6 h-6 rounded border border-border/30 flex items-center justify-center text-[10px] font-medium transition-all duration-200 hover:scale-110 cursor-pointer"
+                                style={{ 
+                                  backgroundColor: color,
+                                  opacity: intensity === 0 ? 0.1 : 0.3 + (intensity * 0.7),
+                                  color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
+                                }}
+                              >
+                                {activeCount > 0 ? activeCount : ''}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-xs">
+                                <div className="font-medium">{courseType} - {month}</div>
+                                <div>진행 과정: {activeCount}개</div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
