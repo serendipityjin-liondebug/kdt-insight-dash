@@ -330,56 +330,58 @@ export function AnnualCalendar({ programs, year = 2025 }: AnnualCalendarProps) {
           </div>
 
           {/* 과정별 월별 히트맵 */}
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-4 w-full">
             <h4 className="text-sm font-medium">과정별 월별 활동 현황</h4>
-            <div className="space-y-2">
-              {Object.entries(courseColors).map(([courseType, color]) => {
-                const courseTypePrograms = yearPrograms.filter(p => p.과정구분 === courseType);
-                
-                return (
-                  <div key={courseType} className="flex items-center gap-3">
-                    <div className="w-24 text-xs font-medium text-right flex-shrink-0">
-                      {courseType}
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-full space-y-3">
+                {Object.entries(courseColors).map(([courseType, color]) => {
+                  const courseTypePrograms = yearPrograms.filter(p => p.과정구분 === courseType);
+                  
+                  return (
+                    <div key={courseType} className="flex items-center gap-4 min-w-[800px]">
+                      <div className="w-32 text-sm font-medium text-right flex-shrink-0">
+                        {courseType}
+                      </div>
+                      <div className="flex gap-2 flex-1">
+                        {months.map((month, monthIndex) => {
+                          const activeCount = courseTypePrograms.filter(program => 
+                            getMonthStatus(program, monthIndex) !== 'none'
+                          ).length;
+                          
+                          const maxForType = Math.max(...months.map((_, idx) =>
+                            courseTypePrograms.filter(p => getMonthStatus(p, idx) !== 'none').length
+                          ));
+                          
+                          const intensity = maxForType > 0 ? activeCount / maxForType : 0;
+                          
+                          return (
+                            <Tooltip key={month}>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  className="flex-1 h-8 rounded border border-border/30 flex items-center justify-center text-sm font-medium transition-all duration-200 hover:scale-105 cursor-pointer"
+                                  style={{ 
+                                    backgroundColor: color,
+                                    opacity: intensity === 0 ? 0.1 : 0.3 + (intensity * 0.7),
+                                    color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
+                                  }}
+                                >
+                                  {activeCount > 0 ? activeCount : ''}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-xs">
+                                  <div className="font-medium">{courseType} - {month}</div>
+                                  <div>진행 과정: {activeCount}개</div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex gap-1 flex-1">
-                      {months.map((month, monthIndex) => {
-                        const activeCount = courseTypePrograms.filter(program => 
-                          getMonthStatus(program, monthIndex) !== 'none'
-                        ).length;
-                        
-                        const maxForType = Math.max(...months.map((_, idx) =>
-                          courseTypePrograms.filter(p => getMonthStatus(p, idx) !== 'none').length
-                        ));
-                        
-                        const intensity = maxForType > 0 ? activeCount / maxForType : 0;
-                        
-                        return (
-                          <Tooltip key={month}>
-                            <TooltipTrigger asChild>
-                              <div 
-                                className="w-6 h-6 rounded border border-border/30 flex items-center justify-center text-[10px] font-medium transition-all duration-200 hover:scale-110 cursor-pointer"
-                                style={{ 
-                                  backgroundColor: color,
-                                  opacity: intensity === 0 ? 0.1 : 0.3 + (intensity * 0.7),
-                                  color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
-                                }}
-                              >
-                                {activeCount > 0 ? activeCount : ''}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="text-xs">
-                                <div className="font-medium">{courseType} - {month}</div>
-                                <div>진행 과정: {activeCount}개</div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
